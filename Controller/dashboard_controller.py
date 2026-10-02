@@ -1,20 +1,20 @@
-from Views.mainWindow import MainWindow, App
+from DTO.dashboardDTO import DashboardDTO
+from Repository.abstract_repository.modul_repository_abstract import ModulRepositoryAbstract
+from Repository.abstract_repository.pruefungsleistung_repository_abstract import PruefungsleistungRepositoryAbstract
+from Repository.abstract_repository.student_repository_abstract import StudentRepositoryAbstract
+from Repository.abstract_repository.semester_repository_abstract import SemesterRepositoryAbstract
+from Repository.abstract_repository.studiengang_repository_abstract import StudiengangRepositoryAbstract
 
 class DashboardController:
-    def __init__(self, app: App, studiengang_controller, student_controller) -> None:
-        self.app = app
-        self.studiengang_controller = studiengang_controller
-        self.student_controller = student_controller
-        self.current_page = None
-        self.zeige_startseite()
+    def __init__(self, student_repository: StudentRepositoryAbstract, modul_repository: ModulRepositoryAbstract, pruefungsleistung_repository: PruefungsleistungRepositoryAbstract, studiengang_repository: StudiengangRepositoryAbstract, semester_repository: SemesterRepositoryAbstract) -> None:
+        self._student_rep = student_repository
+        self._modul_rep = modul_repository
+        self._pruefungsleistung_rep = pruefungsleistung_repository
+        self._studiengang_rep = studiengang_repository
+        self._semester_rep = semester_repository
 
-    def zeige_startseite(self):
-        self.zeige_seite(MainWindow, self)
+    def get_studenten(self):
+        return self._student_rep.lade_alle()
 
-    def zeige_seite(self, page, controller, **kwargs):
-        if self.current_page is not None:
-            for child in self.app.winfo_children():
-                child.destroy()
-
-        self.current_page = page(self.app, controller, **kwargs)
-        self.current_page.pack(fill="both", expand=True)
+    def lade_dashboard_daten(self) -> DashboardDTO:
+        pass
