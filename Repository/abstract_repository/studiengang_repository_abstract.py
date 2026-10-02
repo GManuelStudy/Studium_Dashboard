@@ -3,7 +3,7 @@ from Model.studiengang import Studiengang
 
 class StudiengangRepositoryAbstract(ABC):
     @abstractmethod
-    def speichern(self, studiengang: Studiengang) -> None:
+    def speichern(self, studiengang: Studiengang) -> Studiengang:
         pass
 
     @abstractmethod
@@ -20,4 +20,12 @@ class StudiengangRepositoryAbstract(ABC):
 
     @abstractmethod
     def loeschen(self, studiengang: Studiengang) -> None:
+        pass
+
+    @abstractmethod
+    def lade_studiengang_id(self, studiengang: Studiengang) -> int:
+        pass
+
+    @abstractmethod
+    def lade_von_id(self, id: int) -> Studiengang:
         pass

@@ -1,5 +1,7 @@
+import datetime
 from abc import ABC, abstractmethod
 from Model.student import Student
+from Model.studiengang import Studiengang
 
 class StudentRepositoryAbstract(ABC):
     @abstractmethod
@@ -7,7 +9,7 @@ class StudentRepositoryAbstract(ABC):
         pass
 
     @abstractmethod
-    def lade_student(self, student: Student) -> Student:
+    def lade_student(self, matrikelnummer: str) -> Student:
         pass
 
     @abstractmethod
@@ -15,9 +17,9 @@ class StudentRepositoryAbstract(ABC):
         pass
 
     @abstractmethod
-    def aktualisieren(self, student: Student) -> None:
+    def aktualisieren(self, student: Student, vorname_neu:str, nachname_neu:str, matrikelnummer_neu:str, studiengang: Studiengang, notendurchschnitt_ziel:float, beginndatum_neu: datetime, zielabschlussdatum_neu: datetime) -> None:
         pass
 
     @abstractmethod
-    def loeschen(self, student: Student) -> None:
+    def loeschen(self, matrikelnummer: str) -> None:
         pass
