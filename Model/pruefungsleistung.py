@@ -10,7 +10,7 @@ if TYPE_CHECKING:
 
 @dataclass
 class Pruefungsleistung:
-    student : Student | None
+    student : Student
     modul : Modul
     note : float| None
     status : Status = Status.OFFEN

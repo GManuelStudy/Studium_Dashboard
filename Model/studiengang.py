@@ -21,4 +21,4 @@ class Studiengang:
 
     @property
     def anzahlModule(self) -> int:
-        return sum([len(item.module) for item in self.semester])
+        return sum(len(semester.module) for semester in self.semester)

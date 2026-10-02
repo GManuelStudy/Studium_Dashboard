@@ -9,8 +9,8 @@ if TYPE_CHECKING:
 
 @dataclass
 class Modul:
-    modulname : str
     modulcode : str
+    modulname : str
     ects : int
     semester : Semester
     pruefungsleistungen : list[Pruefungsleistung] = field(default_factory=list)

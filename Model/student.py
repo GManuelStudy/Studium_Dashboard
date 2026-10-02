@@ -21,6 +21,13 @@ class Student:
     pruefungsleistungen : list[Pruefungsleistung] = field(default_factory=list)
 
     @property
+    def aktuellerNotendurchschnitt(self) -> float:
+        modul_noten = [item.note for item in self.pruefungsleistungen if item.note is not None and item.status == Status.ABGESCHLOSSEN]
+        if len(modul_noten) == 0:
+            return 0
+        return sum(modul_noten) / len(modul_noten)
+
+    @property
     def aktuelleECTS(self) -> int:
         modul_ects = [item.modul.ects for item in self.pruefungsleistungen if item.status == Status.ABGESCHLOSSEN]
         return sum(modul_ects)
