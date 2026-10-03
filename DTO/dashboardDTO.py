@@ -1,6 +1,10 @@
 from dataclasses import dataclass, field
 
 from datetime import datetime
+
+from dateutil.relativedelta import relativedelta
+
+from DTO.semesterDTO import SemesterDTO
 from Model.student import Student
 from Model.studiengang import Studiengang
 from Model.semester import Semester
@@ -14,8 +18,6 @@ class DashboardDTO:
     aktueller_notendurchschnitt: float
     erforderliche_note: float
     studiendauer_fortschritt: float
-    verbleibende_dauer: datetime
-    verfuegbare_dauer_pro_modul: datetime
-    semester_notendurchschnitt: float
-    semester: list[Semester] = field(default_factory=list)
-    module: list[Modul] = field(default_factory=list)
+    verbleibende_dauer: relativedelta
+    verfuegbare_dauer_pro_modul: float| None
+    semester: list[SemesterDTO] = field(default_factory=list)
