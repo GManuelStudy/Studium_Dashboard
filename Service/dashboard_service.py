@@ -1,3 +1,5 @@
+from Model.modul import Modul
+from Model.pruefungsleistung import Pruefungsleistung
 from Model.semester import Semester
 from Model.status import Status
 from Model.student import Student
@@ -10,7 +12,24 @@ class DashboardService:
                  if pruefung.modul.semester == semester and
                  pruefung.note is not None
         ]
+        if len(noten) == 0:
+            return 0
         return sum(noten) / len(noten)
+
+    def berechne_semester_status(self, semester: Semester, student: Student) -> Status:
+        module = {modul.modulcode for modul in semester.module}
+        pruefungsleistungen = [item for item in student.pruefungsleistungen if item.modul.modulcode in module]
+
+        if not pruefungsleistungen:
+            return Status.OFFEN
+
+        if any(item.status == Status.NICHT_BESTANDEN for item in pruefungsleistungen):
+            return Status.NICHT_BESTANDEN
+
+        if all(item.status == Status.ABGESCHLOSSEN for item in pruefungsleistungen):
+            return Status.ABGESCHLOSSEN
+
+        return Status.OFFEN
 
     def berechne_erforderliche_note(self, student: Student) -> float:
         anzahl_pruefungen = len([item for item in student.pruefungsleistungen if item.status != Status.OFFEN and item.note is not None])
@@ -50,3 +69,6 @@ class DashboardService:
         dauer_ges = (student.zielabschlussdatum - student.beginndatum).total_seconds()
         dauer_vergangen = (datum_heute - student.beginndatum).total_seconds()
         return dauer_vergangen / dauer_ges * 100
+
+    def get_pruefungsleistung(self, student: Student, modul: Modul) -> Pruefungsleistung | None:
+        return next((item for item in student.pruefungsleistungen if item.modul.modulcode == modul.modulcode),None)
