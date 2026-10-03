@@ -8,12 +8,15 @@ from Repository.sqlite_repository.sqlite_semester_repository import SQLiteSemest
 from Repository.sqlite_repository.sqlite_student_repository import SQLiteStudentRepository
 from Repository.sqlite_repository.sqlite_studiengang_repository import SQLiteStudiengangRepository
 from Repository.database import Database
+from Service.dashboard_service import DashboardService
 from Views.mainWindow import App
 
 class DashboardApp:
     def __init__(self) -> None:
         self._db = Database()
         self._app = App("Studium Dashboard", (1200, 800))
+
+        self._dashboard_service = DashboardService()
 
         self._studiengang_rep = SQLiteStudiengangRepository(self._db)
         self._semester_rep = SQLiteSemesterRepository(self._db, self._studiengang_rep)
@@ -27,7 +30,7 @@ class DashboardApp:
 
         self._studiengang_controller = StudiengangController(self._studiengang_rep, self._modul_rep, self._semester_rep)
         self._student_controller = StudentController(self._student_rep, self._modul_rep, self._pruefungsleistung_rep)
-        self._dashboard_controller = DashboardController(self._student_rep, self._modul_rep, self._pruefungsleistung_rep, self._studiengang_rep, self._semester_rep)
+        self._dashboard_controller = DashboardController(self._student_rep, self._modul_rep, self._pruefungsleistung_rep, self._studiengang_rep, self._semester_rep, self._dashboard_service)
         self._dashboard_controller = HomeController(self._app, self._studiengang_controller, self._student_controller, self._dashboard_controller)
 
 
