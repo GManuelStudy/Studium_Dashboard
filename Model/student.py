@@ -45,7 +45,7 @@ class Student:
             if not module:
                 continue
 
-            alle_module_abgeschlossen = all([item.modul.semester == modul.semester and item.status == Status.ABGESCHLOSSEN for item in self.pruefungsleistungen] for modul in module)
+            alle_module_abgeschlossen = all(any(item.modul == modul and item.status == Status.ABGESCHLOSSEN for item in self.pruefungsleistungen) for modul in module)
             if alle_module_abgeschlossen:
                 abgeschlossene_semester += 1
         return abgeschlossene_semester
