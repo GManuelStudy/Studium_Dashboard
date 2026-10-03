@@ -15,6 +15,10 @@ class StudiengangRepositoryAbstract(ABC):
         pass
 
     @abstractmethod
+    def lade_studiengang_von_student(self, matrikelnummer: str):
+        pass
+
+    @abstractmethod
     def aktualisieren(self, studiengang: Studiengang, bezeichnung_neu: str) -> None:
         pass
 

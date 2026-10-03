@@ -19,6 +19,12 @@ class SQLiteStudiengangRepository(SQLiteRepository, StudiengangRepositoryAbstrac
             (studiengang.studiengang,),
         )["id"]
 
+    def lade_studiengang_von_student(self, matrikelnummer: str) -> Studiengang:
+        return self.lade_von_id(self._lade_eine_zeile(
+            "SELECT studiengang_id FROM Student WHERE matrikelnummer = ?",
+            (matrikelnummer,),
+        )["studiengang_id"])
+
     def lade_studiengang(self, studiengang: Studiengang) -> Studiengang:
         return self.lade_von_id(self.lade_studiengang_id(studiengang))
 

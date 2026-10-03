@@ -15,8 +15,8 @@ class SQLiteSemesterRepository(SQLiteRepository, SemesterRepositoryAbstract):
 
     def speichern(self, semester: Semester) -> None:
         self._schreiben(
-            """INSERT INTO Semester (semester, status, studiengang_id)
-               VALUES (:semester, :status, :studiengang_id)""",
+            """INSERT INTO Semester (semester, studiengang_id)
+               VALUES (:semester, :studiengang_id)""",
             self.to_database(semester),
         )
 
@@ -52,7 +52,7 @@ class SQLiteSemesterRepository(SQLiteRepository, SemesterRepositoryAbstract):
         if semester_neu is not None:
             daten["semester"] = semester_neu
         self._schreiben(
-            """UPDATE Semester SET semester = :semester, status = :status
+            """UPDATE Semester SET semester = :semester
                WHERE semester = :semester_alt AND studiengang_id = :studiengang_id""",
             daten, muss_existieren=True,
         )
@@ -67,13 +67,11 @@ class SQLiteSemesterRepository(SQLiteRepository, SemesterRepositoryAbstract):
     def from_database(self, row) -> Semester:
         return Semester(
             semester=row["semester"],
-            status=Status(row["status"]),
             studiengang=self.studiengang_repository.lade_von_id(row["studiengang_id"]),
         )
 
     def to_database(self, semester: Semester) -> dict:
         return {
             "semester": semester.semester,
-            "status": semester.status.value,
             "studiengang_id": self.studiengang_repository.lade_studiengang_id(semester.studiengang),
         }

@@ -40,7 +40,6 @@ class Database:
             CREATE TABLE IF NOT EXISTS Semester (
                 id                              INTEGER PRIMARY KEY AUTOINCREMENT,
                 semester                        INTEGER NOT NULL,
-                status                          TEXT    NOT NULL,
                 studiengang_id                  INTEGER NOT NULL,
                 UNIQUE (semester, studiengang_id),
                 FOREIGN KEY (studiengang_id)    REFERENCES Studiengang (id)

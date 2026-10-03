@@ -18,8 +18,8 @@ class SQLitePruefungsleistungRepository(SQLiteRepository, PruefungsleistungRepos
         if pruefungsleistung.student is None:
             raise ValueError("Eine gespeicherte Prüfungsleistung benötigt einen Studenten.")
         return {
-            "student_id": self.student_repository.lade_student_id(pruefungsleistung.student),
-            "modul_id": self.modul_repository.lade_modul_id(pruefungsleistung.modul),
+            "student_id": self.student_repository.lade_student_id(pruefungsleistung.student.matrikelnummer),
+            "modul_id": self.modul_repository.lade_modul_id(pruefungsleistung.modul.modulcode),
         }
 
     def speichern(self, pruefungsleistung: Pruefungsleistung) -> None:
