@@ -15,8 +15,8 @@ class SQLiteModulRepository(SQLiteRepository, ModulRepositoryAbstract):
 
     def speichern(self, modul: Modul) -> None:
         self._schreiben(
-            """INSERT INTO Modul (modulname, modulcode, ects, semester_id)
-               VALUES (:modulname, :modulcode, :ects, :semester_id)""",
+            """INSERT INTO Modul (modulname, modulcode, ects, semester_id, studiengang_id)
+               VALUES (:modulname, :modulcode, :ects, :semester_id, :studiengang_id)""",
             self.to_database(modul),
         )
 
@@ -75,7 +75,7 @@ class SQLiteModulRepository(SQLiteRepository, ModulRepositoryAbstract):
         daten["modulcode_alt"] = modul.modulcode
         self._schreiben(
             """UPDATE Modul SET modulname = :modulname, modulcode = :modulcode,
-               ects = :ects, semester_id = :semester_id WHERE modulcode = :modulcode_alt""",
+               ects = :ects, semester_id = :semester_id, studiengang_id = :studiengang_id WHERE modulcode = :modulcode_alt""",
             daten, muss_existieren=True,
         )
         modul.modulname, modul.modulcode, modul.ects, modul.semester = (
@@ -97,4 +97,5 @@ class SQLiteModulRepository(SQLiteRepository, ModulRepositoryAbstract):
         return {
             "modulname": modul.modulname, "modulcode": modul.modulcode, "ects": modul.ects,
             "semester_id": self.semester_repository.lade_semester_id(modul.semester),
+            "studiengang_id": self.studiengang_repository.lade_studiengang_id(modul.semester.studiengang),
         }

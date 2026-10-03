@@ -42,6 +42,7 @@ class Database:
                 semester                        INTEGER NOT NULL,
                 studiengang_id                  INTEGER NOT NULL,
                 UNIQUE (semester, studiengang_id),
+                UNIQUE (id, studiengang_id),
                 FOREIGN KEY (studiengang_id)    REFERENCES Studiengang (id)
                     ON DELETE CASCADE
                     ON UPDATE CASCADE
@@ -50,10 +51,12 @@ class Database:
             CREATE TABLE IF NOT EXISTS Modul (
                 id           INTEGER    PRIMARY KEY AUTOINCREMENT,
                 modulname    TEXT       NOT NULL,
-                modulcode    TEXT       NOT NULL UNIQUE,
+                modulcode    TEXT       NOT NULL,
                 ects         INTEGER    NOT NULL,
                 semester_id  INTEGER    NOT NULL,
-                FOREIGN KEY (semester_id) REFERENCES Semester (id)
+                studiengang_id INTEGER NOT NULL,
+                UNIQUE (studiengang_id, modulcode),
+                FOREIGN KEY (semester_id, studiengang_id) REFERENCES Semester (id, studiengang_id)
                     ON DELETE CASCADE
                     ON UPDATE CASCADE
             );
