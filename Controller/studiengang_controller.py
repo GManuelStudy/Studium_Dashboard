@@ -14,8 +14,6 @@ class StudiengangController:
         self._modul_rep = modul_repositoy
         self._semester_rep = semester_repository
 
-
-
     def get_studiengaenge(self) -> list[Studiengang]:
         studiengaenge_temp = self._studiengang_rep.lade_alle()
         studiengaenge = []
@@ -71,7 +69,7 @@ class StudiengangController:
 
         semester = next((item for item in semester_list if item.semester == int(semester_num)), None)
         if semester is None:
-            semester = Semester(semester_num, Status.OFFEN, studiengang)
+            semester = Semester(semester_num, studiengang)
             self._semester_rep.speichern(semester)
             # semester = next(item for item in semester_list if item.semester == semester)
             # studiengang.semester.append(semester)

@@ -236,5 +236,5 @@ class StudentenForm(ttk.Frame):
 
     def note_eintragen(self):
         data = self.treeview_module.get_sheet_data()
-
         self.controller.student_controller.update_pruefungsleistungen(self.student, data)
+        self.controller.zeige_seite(StudentenForm, self.controller, student=self.student)

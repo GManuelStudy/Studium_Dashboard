@@ -56,3 +56,24 @@ class StudentController:
 
     def del_student(self, matrikelnummer: str):
         self._student_rep.loeschen(matrikelnummer)
+
+    def update_pruefungsleistungen(self, student, data):
+        for pruefungsleistung, row in zip(student.pruefungsleistungen, data):
+            if row[4] == '':
+                row[4] = 0
+
+
+            note = float(row[4])
+
+            pruefungsleistung.note = note
+
+            if note == 5:
+                status = Status.NICHT_BESTANDEN
+            elif note == 0:
+                status = Status.OFFEN
+                pruefungsleistung.note = None
+            else:
+                status = Status.ABGESCHLOSSEN
+
+            pruefungsleistung.status = status
+            self._pruefungsleistung_rep.aktualisieren(pruefungsleistung)

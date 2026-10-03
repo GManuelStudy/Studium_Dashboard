@@ -1,15 +1,19 @@
 import ttkbootstrap as ttk
 import tkinter as tk
+
+from DTO.modulDTO import ModulDTO
+from DTO.semesterDTO import SemesterDTO
 from Model.status import Status
 from Model.student import Student
+from Model.studiengang import Studiengang
 
 
 class Dashboard(ttk.Frame):
-    def __init__(self, parent, controller, student=None):
+    def __init__(self, parent, controller):
         super().__init__(parent)
         self.parent = parent
         self.controller = controller
-        self.student = student
+        self.dashboard_dto = None
         # self.place(relx=0.5, rely=0.30, anchor="center", relwidth=0.7, relheight=0.8)
         self.create_scroll_container()
         self.create_widgets()
@@ -22,7 +26,8 @@ class Dashboard(ttk.Frame):
         self.label_title = ttk.Label(self.frame_title, text="Mein Dashboard", font=("Arial", 24, "bold"))
         self.str_var_benutzer = tk.StringVar(value='- Benutzer auswählen -')
         self.combobox_studenten = ttk.Combobox(self.frame_title, textvariable=self.str_var_benutzer, width=50)
-        self.label_sub_title = ttk.Label(self.scrollable_frame, font=("Arial", 12))
+        self.label_sub_title = ttk.Label(self.scrollable_frame, font=("Arial", 14))
+        self.label_sub_title2 = ttk.Label(self.scrollable_frame, font=("Arial", 12))
 
         # studienfortschritt
         self.frame_studienfortschritt = ttk.Frame(self.scrollable_frame)
@@ -69,6 +74,7 @@ class Dashboard(ttk.Frame):
 
         self.create_init_layout()
         self.label_sub_title.pack(side='top', padx=20, anchor='w')
+        self.label_sub_title2.pack(side='top', padx=20, anchor='w')
 
         self.frame_studienfortschritt.pack(side='top', padx=10, fill='x', anchor='center')
         self.frame_studienfortschritt.columnconfigure((0,1,2,3,4,5,6), weight=1, uniform='a')
@@ -83,7 +89,7 @@ class Dashboard(ttk.Frame):
         self.card_semester.grid(row = 0, column=2, pady=5, padx=10, sticky='nswe')
         self.card_module.grid(row = 0, column=3, pady=5, padx=10, sticky='nswe')
 
-        self.frame_mid.pack(side='top', padx=10, fill='x', anchor='center')
+        self.frame_mid.pack(side='top', padx=10, pady=(5,20), fill='x', anchor='center')
         self.frame_mid.columnconfigure((0,1,2,3,4,5,6), weight=1, uniform='a')
         self.frame_mid.rowconfigure(0, weight=1, uniform='a')
         self.frame_durchschnittsnote.grid(row=0, column=2, columnspan=2, pady=5, padx=10, sticky='nswe')
@@ -96,10 +102,10 @@ class Dashboard(ttk.Frame):
         self.label_studiendauer.pack(side='left', pady=5, padx=10, fill='x', anchor='w')
         self.label_enddatum.pack(side='right', pady=5, padx=10, fill='x', anchor='w')
         self.progressbar_studiendauer.pack(side='top', pady=5, padx=10, fill='x', anchor='w')
-        self.label_verbleibende_dauer.pack(side='top', pady=5, padx=10, fill='x', anchor='w')
-        self.label_verbleibende_dauer_value.pack(side='top', pady=5, padx=10, fill='x', anchor='w')
-        self.label_verfuegbare_dauer.pack(side='top', pady=5, padx=10, fill='x', anchor='w')
-        self.label_verfuegbare_dauer_value.pack(side='top', pady=5, padx=10, fill='x', anchor='w')
+        self.label_verbleibende_dauer.pack(side='top', padx=10, fill='x', anchor='w')
+        self.label_verbleibende_dauer_value.pack(side='top', pady=(0,5), padx=10, fill='x', anchor='w')
+        self.label_verfuegbare_dauer.pack(side='top', padx=10, fill='x', anchor='w')
+        self.label_verfuegbare_dauer_value.pack(side='top', pady=(0,5), padx=10, fill='x', anchor='w')
 
     def get_selected_student(self):
         index = self.combobox_studenten.current()
@@ -108,7 +114,7 @@ class Dashboard(ttk.Frame):
             return None
 
         student = self.studenten[index]
-        return self.controller.get_student(student.id)
+        return self.controller.dashboard_controller.get_student(student.matrikelnummer)
 
     def combobox_change_selected(self, event):
         self.student = self.get_selected_student()
@@ -125,8 +131,12 @@ class Dashboard(ttk.Frame):
         self.button_back = ttk.Button(self.scrollable_frame, text='Zurück', bootstyle='secondary',command=lambda: self.controller.zeige_startseite())
         self.button_back.pack(side='bottom', pady=20, padx=20, anchor='sw')
 
-        self.label_sub_title.config(text=f"{self.student.vorname} {self.student.nachname} - {self.student.studiengang.studiengang}")
+        self.dashboard_dto = self.controller.dashboard_controller.lade_dashboard_daten(
+            self.student.matrikelnummer
+        )
 
+        self.label_sub_title.config(text=f"{self.dashboard_dto.student.vorname} {self.dashboard_dto.student.nachname} - {self.dashboard_dto.student.matrikelnummer}")
+        self.label_sub_title2.config(text=f"{self.dashboard_dto.studiengang.studiengang}")
         self.fill_studienfortschritt()
 
         self.fill_studiendauer()
@@ -135,20 +145,19 @@ class Dashboard(ttk.Frame):
         self.fill_semester()
 
     def fill_studienfortschritt(self):
-        student = self.student
-        print(self.student)
-        studienfortschritt = student.berechne_studienfortschritt()
+        dashboard_dto = self.dashboard_dto
+        studienfortschritt = dashboard_dto.studienfortschritt
         self.int_var_studienfortschritt.set(studienfortschritt)
-        self.label_studienfortschritt.config(text=f"Studienfortschritt: {studienfortschritt}%")
-        self.card_ects = self.create_studienfortschritt_card('ECTS:', f'{student.aktuelleECTS} / {student.studiengang.ectsGesamt}')
-        self.card_semester = self.create_studienfortschritt_card('Semester:', f'{student.abgeschlosseneSemester} / {student.studiengang.anzahlSemester}')
-        self.card_module = self.create_studienfortschritt_card('Module:', f'{student.abgeschlosseneModule} / {student.studiengang.anzahlModule}')
+        self.label_studienfortschritt.config(text=f"Studienfortschritt: {studienfortschritt:.2f}%")
+        self.card_ects = self.create_studienfortschritt_card('ECTS:', f'{dashboard_dto.student.aktuelleECTS} / {dashboard_dto.studiengang.ectsGesamt}')
+        self.card_semester = self.create_studienfortschritt_card('Semester:', f'{dashboard_dto.student.abgeschlosseneSemester} / {dashboard_dto.studiengang.anzahlSemester}')
+        self.card_module = self.create_studienfortschritt_card('Module:', f'{dashboard_dto.student.abgeschlosseneModule} / {dashboard_dto.studiengang.anzahlModule}')
 
     def fill_durchschnittsnote(self):
-        student = self.student
-        durschnittsnote = student.aktuellerNotendurchschnitt
-        zieldurschnittsnote = student.zielnotendurchschnitt
-        erforderliche_note = student.berechne_erforderliche_note()
+        dashboard_dto = self.dashboard_dto
+        durschnittsnote = dashboard_dto.aktueller_notendurchschnitt
+        zieldurschnittsnote = dashboard_dto.student.zielnotendurchschnitt
+        erforderliche_note = dashboard_dto.erforderliche_note
         style = ttk.Style()
         style.configure("GreenCard.TFrame", borderwidth=2, relief="solid", background="#d4edda")
         style.configure("RedCard.TFrame", borderwidth=2, relief="solid", background="#f8d7da")
@@ -175,40 +184,35 @@ class Dashboard(ttk.Frame):
             self.label_mindestnote.pack(side='top', pady=5, padx=10, fill='x', anchor='w')
 
     def fill_studiendauer(self):
-        student = self.student
-        fortschritt = student.berechne_studiendauer_fortschritt()
+        dashboard_dto = self.dashboard_dto
+        fortschritt = dashboard_dto.studiendauer_fortschritt
+        verbleibende_dauer = dashboard_dto.verbleibende_dauer
         self.label_studiendauer.config(text=f"Studiendauer: {fortschritt:.2f} %")
-        self.label_enddatum.config(text=f"Enddatum: {student.enddatum.strftime('%d.%m.%Y')}")
-        self.label_verbleibende_dauer_value.config(text=student.berechne_verbleibende_dauer())
-        self.label_verfuegbare_dauer_value.config(text=student.berechne_verfuegbare_dauer_pro_modul())
+        self.label_enddatum.config(text=f"Enddatum: {dashboard_dto.student.zielabschlussdatum.strftime('%d.%m.%Y')}")
+        self.label_verbleibende_dauer_value.config(text=f'{verbleibende_dauer.years} Jahr(e), {verbleibende_dauer.months} Monat(e), {verbleibende_dauer.days} Tag(e)')
+        self.label_verfuegbare_dauer_value.config(text=f'{dashboard_dto.verfuegbare_dauer_pro_modul:.2f} Tag(e)')
         self.int_var_studiendauerfortschritt.set(fortschritt)
 
     def fill_semester(self):
-        student = self.student
-
-        for semester in student.studiengang.semester:
+        for semester in self.dashboard_dto.semester:
             self.create_accordion(semester)
 
-    def fill_module(self, parent, modul):
-        pruefungsleistung = self.student.get_pruefungsleistung(modul)
-        note = '-'
-        status = Status.OFFEN
+    def fill_module(self, parent, modul_dto: ModulDTO):
+        modul = modul_dto.modul
+        note = modul_dto.note
 
-        if pruefungsleistung:
-            if pruefungsleistung.note is not None:
-                note = pruefungsleistung.note
-                if note == 0:
-                    note = '-'
-
-            status = pruefungsleistung.status
+        if note is None or note == 0:
+            note_text = '-'
+        else:
+            note_text = note
 
         content_row = tk.Frame(parent, bg='white', bd=1, relief='solid')
         content_row.columnconfigure((0, 1, 2, 3), weight=1, uniform='a')
         content_row.rowconfigure(0, weight=1, uniform='a')
         ttk.Label(content_row, text=modul.modulname).grid(column=0, row=0, padx=20, sticky='w')
         ttk.Label(content_row, text=f'{modul.ects} ECTS', font=("Arial", 10)).grid(column=1, row=0, padx=20)
-        ttk.Label(content_row, text=f'Note: {note}', font=("Arial", 10)).grid(column=2, row=0, padx=20)
-        ttk.Label(content_row, text=f'Status: {status}', font=("Arial", 10)).grid(column=3, row=0, padx=20)
+        ttk.Label(content_row, text=f'Note: {note_text}', font=("Arial", 10)).grid(column=2, row=0, padx=20)
+        ttk.Label(content_row, text=f'Status: {modul_dto.status}', font=("Arial", 10)).grid(column=3, row=0, padx=20)
         content_row.pack(fill="x", padx=20, pady=2)
 
 
@@ -223,11 +227,11 @@ class Dashboard(ttk.Frame):
         self.label_value.pack(side='top', pady=5, padx=10, fill='x', anchor='w')
         return self.card_studienfortschritt
 
-    def create_accordion(self, semester, **kwargs):
+    def create_accordion(self, semester_dto: SemesterDTO, **kwargs):
         # Eigener Container pro Accordion – hält Header + Content zusammen
-        title = f'Semester {semester.semester}'
-        note = semester.semester_Notendurchschnitt(self.student)
-        status = semester.berechne_status(self.student)
+        title = f'Semester {semester_dto.semester.semester}'
+        note = semester_dto.notendurchschnitt
+        status = semester_dto.status
 
         if note == 0:
             note_text = '-'
@@ -255,7 +259,7 @@ class Dashboard(ttk.Frame):
 
         content = ttk.Frame(container, padding=10)
 
-        for item in semester.module:
+        for item in semester_dto.module:
             self.fill_module(content, item)
             # content_row = tk.Frame(content, bg='white', bd=1, relief='solid')
             # content_row.columnconfigure((0, 1, 2, 3), weight=1, uniform='a')
