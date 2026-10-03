@@ -30,21 +30,22 @@ class StudiengangController:
         studiengang = Studiengang(studiengang=bezeichnung)
         return self._studiengang_rep.lade_studiengang(studiengang)
 
-    def add_studiengang(self, bezeichnung: str) -> Studiengang:
+    def add_studiengang(self, bezeichnung: str):
+        bezeichnung = bezeichnung.strip()
         if not bezeichnung:
-            # bezeichnung ist leer
-            # TODO: Fehlermeldung anzeigen
-            return
+            return None, "Die Bezeichnung darf nicht leer sein."
 
         studiengang = Studiengang(studiengang=bezeichnung)
+        #
+        # if self._studiengang_rep.lade_studiengang(studiengang) is not None:
+        #     return None, "Der Studiengang existiert bereits."
+        try:
+            studiengang_neu = self._studiengang_rep.speichern(studiengang)
+            return studiengang_neu, None
+        except ValueError:
+            return None, "Der Studiengang existiert bereits."
 
-        # if self._repository.lade_studiengang(studiengang) is not None:
-        #     # Studiengang existiert bereits
-        #     # TODO: Fehlermeldung anzeigen
-        #     return
 
-        studiengang_neu = self._studiengang_rep.speichern(studiengang)
-        return studiengang_neu
 
     def update_studiengang(self, studiengang: Studiengang, bezeichnung_neu: str):
         # studiengang_s = studiengang_rep.lade_studiengang(studiengang)
@@ -64,7 +65,10 @@ class StudiengangController:
 
     def add_module(self, modulname: str, modulcode: str, ects: int, semester_num: int, studiengang: Studiengang):
         if not studiengang:
-            return
+            return None, "Studiengang ist nicht vorhanden."
+
+        if modulname == "" or modulcode == "" or ects == "" or semester_num == "":
+            return None, "Alle Modul-Eingabefelder müssen befüllt sein."
         semester_list = self._semester_rep.lade_semester_von_studiengang(studiengang)
 
         semester = next((item for item in semester_list if item.semester == int(semester_num)), None)
@@ -75,9 +79,12 @@ class StudiengangController:
             # studiengang.semester.append(semester)
 
         modul = Modul(modulcode, modulname, ects, semester)
-        self._modul_rep.speichern(modul)
+        try:
+            self._modul_rep.speichern(modul)
+        except ValueError:
+            return None, f"Ein Modul mit dem Modulcode \"{modulcode}\" existiert bereits."
         semester.module.append(modul)
-        # self.show_page(StudiengangForm, self, studiengang=studiengang)
+        return modul, None
 
     def del_modul(self, modulcode: str):
         modul = self._modul_rep.lade_modul(modulcode)

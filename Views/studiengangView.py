@@ -1,5 +1,7 @@
-import ttkbootstrap as ttk
+from tkinter import messagebox
 
+import ttkbootstrap as ttk
+from Views.validierung import (studiengang_validieren, ects_validieren, semester_validieren, modulcode_validieren,modulname_validieren)
 from Model.modul import Modul
 
 
@@ -31,6 +33,7 @@ class Studiengang_Verwalten(ttk.Frame):
 
         self.treeview_studiengaenge.bind('<Delete>', lambda e: self.del_row())
         self.treeview_studiengaenge.bind('<Double-Button-1>', lambda e: self.open_edit())
+        self.treeview_studiengaenge.bind('<<TreeviewSelect>>', self.treeview_selected)
 
         self.style = ttk.Style()
         self.style.configure(
@@ -40,8 +43,8 @@ class Studiengang_Verwalten(ttk.Frame):
         self.button_neu = ttk.Button(self, text='+', bootstyle='success', style='success.TButton', command= lambda: self.controller.zeige_seite(StudiengangForm, self.controller))
 
         self.frame_buttons = ttk.Frame(self)
-        self.button_bearbeiten = ttk.Button(self.frame_buttons, text="Datensatz bearbeiten", bootstyle='primary', command= self.open_edit)
-        self.button_loeschen = ttk.Button(self.frame_buttons, text="Datensatz löschen", bootstyle='danger', command= lambda: self.del_row())
+        self.button_bearbeiten = ttk.Button(self.frame_buttons, text="Datensatz bearbeiten", bootstyle='primary', state='disabled', command= self.open_edit)
+        self.button_loeschen = ttk.Button(self.frame_buttons, text="Datensatz löschen", bootstyle='danger', state='disabled', command= lambda: self.del_row())
         self.button_zurueck = ttk.Button(self.frame_buttons, text="Zurück", bootstyle='secondary', command= lambda: self.controller.zeige_startseite())
 
     def create_layout(self):
@@ -64,6 +67,14 @@ class Studiengang_Verwalten(ttk.Frame):
         for nummer, studiengang in enumerate(studiengaenge, 1):
             self.treeview_studiengaenge.insert('', 'end', iid=str(studiengang.studiengang), values=(nummer, studiengang.studiengang, studiengang.ectsGesamt, studiengang.anzahlSemester, studiengang.anzahlModule))
 
+    def treeview_selected(self, event = None):
+        if self.treeview_studiengaenge.selection():
+            self.button_loeschen.config(state='normal')
+            self.button_bearbeiten.config(state='normal')
+        else:
+            self.button_loeschen.config(state='disabled')
+            self.button_bearbeiten.config(state='disabled')
+
     def del_row(self):
         selection = self.treeview_studiengaenge.selection()
         if not selection:
@@ -76,6 +87,8 @@ class Studiengang_Verwalten(ttk.Frame):
 
 
     def open_edit(self):
+        if not self.treeview_studiengaenge.selection():
+            return
         studiengang = self.controller.studiengang_controller.get_studiengang(self.treeview_studiengaenge.selection()[0])
         self.controller.zeige_seite(StudiengangForm, self.controller, studiengang=studiengang)
 
@@ -94,16 +107,29 @@ class StudiengangForm(ttk.Frame):
         if self.edit:
             self.fill_form()
 
+        if self.studiengang is not None:
+            self.button_add_modul.config(state='normal')
+            self.entry_modulname.config(state='normal')
+            self.entry_modulcode.config(state='normal')
+            self.entry_ects.config(state='normal')
+            self.entry_semester.config(state='normal')
+        else:
+            self.button_add_modul.config(state='disabled')
+            self.entry_modulname.config(state='disabled')
+            self.entry_modulcode.config(state='disabled')
+            self.entry_ects.config(state='disabled')
+            self.entry_semester.config(state='disabled')
+
     def create_widgets(self):
         title = "Studiengang bearbeiten" if self.edit else "Studiengang anlegen"
         self.label_title = ttk.Label(self, text=title, font=("Arial", 24, "bold"))
 
         self.frame_studiengang_form = ttk.Frame(self)
         self.label_studiengang = ttk.Label(self.frame_studiengang_form, text="Studiengang:")
-        self.entry_studiengang = ttk.Entry(self.frame_studiengang_form)
+        self.entry_studiengang = ttk.Entry(self.frame_studiengang_form, validate='key', validatecommand=(self.register(studiengang_validieren), '%P'))
 
         self.button_zurueck = ttk.Button(self, text="Zurück", bootstyle="secondary", command=lambda: self.controller.zeige_seite(Studiengang_Verwalten, self.controller))
-        self.button_speichern = ttk.Button(self.frame_studiengang_form, text="Speichern", bootstyle="primary", command=lambda: self.save())
+        self.button_speichern = ttk.Button(self.frame_studiengang_form, text="Studiengang speichern", bootstyle="primary", command=lambda: self.save())
 
         self.label_modul = ttk.Label(self, text="Module:", font=("Arial", 16, "bold"))
 
@@ -121,19 +147,20 @@ class StudiengangForm(ttk.Frame):
         self.treeview_module.column('semester', anchor='w')
 
         self.treeview_module.bind('<Delete>', lambda e: self.del_row())
+        self.treeview_module.bind('<<TreeviewSelect>>', self.treeview_selected)
 
-        self.button_del_modul = ttk.Button(self, text='Modul löschen', bootstyle='danger', command= lambda: self.del_row())
+        self.button_del_modul = ttk.Button(self, text='Modul löschen', bootstyle='danger', state='disabled', command= lambda: self.del_row())
 
         self.frame_modul_form = ttk.Frame(self)
         self.label_modulname = ttk.Label(self.frame_modul_form, text="Modulname:")
-        self.entry_modulname = ttk.Entry(self.frame_modul_form)
+        self.entry_modulname = ttk.Entry(self.frame_modul_form, validate='key', validatecommand=(self.register(modulname_validieren), '%P'))
         self.label_modulcode = ttk.Label(self.frame_modul_form, text="Modulcode:")
-        self.entry_modulcode = ttk.Entry(self.frame_modul_form)
+        self.entry_modulcode = ttk.Entry(self.frame_modul_form, validate='key', validatecommand=(self.register(modulcode_validieren), '%P'))
         self.label_ects = ttk.Label(self.frame_modul_form, text="ECTS:")
-        self.entry_ects = ttk.Entry(self.frame_modul_form)
+        self.entry_ects = ttk.Entry(self.frame_modul_form, validate='key', validatecommand=(self.register(ects_validieren), '%P'))
         self.label_semester = ttk.Label(self.frame_modul_form, text="Semester:")
-        self.entry_semester = ttk.Entry(self.frame_modul_form)
-        self.button_add_modul = ttk.Button(self.frame_modul_form, text="Hinzufügen", bootstyle="primary", command= lambda: self.modul_speichern())
+        self.entry_semester = ttk.Entry(self.frame_modul_form, validate='key', validatecommand=(self.register(semester_validieren), '%P'))
+        self.button_add_modul = ttk.Button(self.frame_modul_form, text="Hinzufügen", bootstyle="primary", state='disabled', command= lambda: self.modul_speichern())
 
     def create_layout(self):
         self.label_title.pack(side='top', pady=10, padx=10, fill='x', anchor='center')
@@ -159,6 +186,7 @@ class StudiengangForm(ttk.Frame):
         self.button_add_modul.grid(row=1, column=4, padx=10, sticky='we')
         self.button_zurueck.pack(side='top', pady=20, padx=20, anchor="w")
 
+
     def fill_treeview(self):
         for item in self.treeview_module.get_children():
             self.treeview_module.delete(item)
@@ -167,6 +195,12 @@ class StudiengangForm(ttk.Frame):
         module = self.controller.studiengang_controller.get_module(self.studiengang)
         for nummer, modul in enumerate(module,1):
             self.treeview_module.insert('', 'end', iid=str(modul.modulcode), values=(nummer, modul.modulname, modul.modulcode, modul.ects, modul.semester.semester))
+
+    def treeview_selected(self, event = None):
+        if self.treeview_module.selection():
+            self.button_del_modul.config(state='normal')
+        else:
+            self.button_del_modul.config(state='disabled')
 
     def fill_form(self):
         self.entry_studiengang.insert(0, self.studiengang.studiengang)
@@ -187,26 +221,26 @@ class StudiengangForm(ttk.Frame):
         modulname = self.entry_modulname.get().strip()
         ects = self.entry_ects.get().strip()
         semester = self.entry_semester.get().strip()
-        self.controller.studiengang_controller.add_module(modulname, modulcode, ects, semester, self.studiengang)
+        modul, fehler = self.controller.studiengang_controller.add_module(modulname, modulcode, ects, semester, self.studiengang)
+        if fehler:
+            messagebox.showerror("Fehler", fehler)
+            return
         self.fill_treeview()
 
     def save(self):
         bezeichnung = self.entry_studiengang.get().strip()
 
-        if not bezeichnung:
-            return
-
         if self.edit:
             self.controller.studiengang_controller.update_studiengang(self.studiengang, bezeichnung)
         else:
-            studiengang = self.controller.studiengang_controller.add_studiengang(bezeichnung)
-            if studiengang is None:
-                # studiengang existiert bereits
+            studiengang, fehler = self.controller.studiengang_controller.add_studiengang(bezeichnung)
+            if fehler:
+                messagebox.showerror("Fehler", fehler)
                 return
             self.studiengang = studiengang
             self.edit = True
 
-        self.controller.zeige_seite(Studiengang_Verwalten, self.controller)
+        self.controller.zeige_seite(StudiengangForm, self.controller, studiengang=self.studiengang)
 
     # TODO <delete> binding
     # TODO buttons disablen
