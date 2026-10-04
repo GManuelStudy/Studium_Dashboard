@@ -1,3 +1,5 @@
+from tkinter import messagebox
+
 import ttkbootstrap as ttk
 import tkinter as tk
 
@@ -25,7 +27,7 @@ class Dashboard(ttk.Frame):
         self.frame_title = ttk.Frame(self.scrollable_frame)
         self.label_title = ttk.Label(self.frame_title, text="Mein Dashboard", font=("Arial", 24, "bold"))
         self.str_var_benutzer = tk.StringVar(value='- Benutzer auswählen -')
-        self.combobox_studenten = ttk.Combobox(self.frame_title, textvariable=self.str_var_benutzer, width=50)
+        self.combobox_studenten = ttk.Combobox(self.frame_title, state='readonly', textvariable=self.str_var_benutzer, width=50)
         self.label_sub_title = ttk.Label(self.scrollable_frame, font=("Arial", 14))
         self.label_sub_title2 = ttk.Label(self.scrollable_frame, font=("Arial", 12))
 
@@ -47,6 +49,7 @@ class Dashboard(ttk.Frame):
         self.label_durchschnittsnote = ttk.Label(self.frame_durchschnittsnote, text="Durchschnittsnote: 2.1", font=("Arial", 10))
         self.label_zieldurschnittsnote = ttk.Label(self.frame_durchschnittsnote, text="Zielnote: 2", font=("Arial", 10))
         self.label_mindestnote = ttk.Label(self.frame_durchschnittsnote, text="Mindestnote im nächsten Modul: 1.6", font=("Arial", 10))
+        self.label_durchschnitt_bei_mindestnote = ttk.Label(self.frame_durchschnittsnote, text="Durchschnittsnote wenn Mindestnote erreicht wird", font=("Arial", 8))
 
         self.frame_studiendauer_top = ttk.Frame(self.frame_studiendauer)
         self.label_studiendauer = ttk.Label(self.frame_studiendauer_top, text="Studiendauer", font=("Arial", 10))
@@ -114,10 +117,18 @@ class Dashboard(ttk.Frame):
             return None
 
         student = self.studenten[index]
-        return self.controller.dashboard_controller.get_student(student.matrikelnummer)
+        student, fehler = self.controller.dashboard_controller.get_student(student.matrikelnummer)
+        if fehler:
+            messagebox.showerror("Fehler", fehler)
+            self.controller.zeige_startseite()
+            return None
+        return student
 
     def combobox_change_selected(self, event):
         self.student = self.get_selected_student()
+        if self.student is None:
+            self.controller.zeige_startseite()
+            return
         self.fill_form()
 
     def fill_combobox(self):
@@ -131,9 +142,14 @@ class Dashboard(ttk.Frame):
         self.button_back = ttk.Button(self.scrollable_frame, text='Zurück', bootstyle='secondary',command=lambda: self.controller.zeige_startseite())
         self.button_back.pack(side='bottom', pady=20, padx=20, anchor='sw')
 
-        self.dashboard_dto = self.controller.dashboard_controller.lade_dashboard_daten(
+        self.dashboard_dto, fehler = self.controller.dashboard_controller.lade_dashboard_daten(
             self.student.matrikelnummer
         )
+
+        if fehler:
+            messagebox.showerror("Fehler", fehler)
+            self.controller.zeige_startseite()
+            return
 
         self.label_sub_title.config(text=f"{self.dashboard_dto.student.vorname} {self.dashboard_dto.student.nachname} - {self.dashboard_dto.student.matrikelnummer}")
         self.label_sub_title2.config(text=f"{self.dashboard_dto.studiengang.studiengang}")
@@ -158,6 +174,7 @@ class Dashboard(ttk.Frame):
         durschnittsnote = dashboard_dto.aktueller_notendurchschnitt
         zieldurschnittsnote = dashboard_dto.student.zielnotendurchschnitt
         erforderliche_note = dashboard_dto.erforderliche_note
+        durchschnitt_neu = dashboard_dto.notendurchschnitt_bei_erfolgreicher_note
         style = ttk.Style()
         style.configure("GreenCard.TFrame", borderwidth=2, relief="solid", background="#d4edda")
         style.configure("RedCard.TFrame", borderwidth=2, relief="solid", background="#f8d7da")
@@ -165,23 +182,27 @@ class Dashboard(ttk.Frame):
         style.configure('GreenLabel.TLabel', background='#d4edda')
 
         if durschnittsnote == 0:
-            self.label_durchschnittsnote.config(text='Ø Note: -')
+            self.label_durchschnittsnote.config(text='Ø-Note: -')
         else:
-            self.label_durchschnittsnote.config(text=f'Ø Note: {durschnittsnote:.2f}')
+            self.label_durchschnittsnote.config(text=f'Ø-Note: {durschnittsnote:.2f}')
 
-        self.label_zieldurschnittsnote.config(text=f'Ziel Ø Note: {zieldurschnittsnote:.2f}')
-        if durschnittsnote < zieldurschnittsnote:
+        self.label_zieldurschnittsnote.config(text=f'Ziel Ø-Note: {zieldurschnittsnote:.2f}')
+        if durschnittsnote <= zieldurschnittsnote:
             self.frame_durchschnittsnote.config(style='GreenCard.TFrame')
             self.label_durchschnittsnote.config(style='GreenLabel.TLabel')
             self.label_zieldurschnittsnote.config(style='GreenLabel.TLabel')
             self.label_mindestnote.pack_forget()
+            self.label_durchschnitt_bei_mindestnote.pack_forget()
         else:
             self.frame_durchschnittsnote.config(style='RedCard.TFrame')
             self.label_durchschnittsnote.config(style='RedLabel.TLabel')
             self.label_zieldurschnittsnote.config(style='RedLabel.TLabel')
             self.label_mindestnote.config(style='RedLabel.TLabel')
+            self.label_durchschnitt_bei_mindestnote.config(style='RedLabel.TLabel')
             self.label_mindestnote.config(text=f'Mindestnote im nächsten Modul: {erforderliche_note:.2f}')
-            self.label_mindestnote.pack(side='top', pady=5, padx=10, fill='x', anchor='w')
+            self.label_durchschnitt_bei_mindestnote.config(text=f'Ø-Note wenn Mindestnote erreicht wird: {durchschnitt_neu:.2f}')
+            self.label_mindestnote.pack(side='top', pady=(5,0), padx=10, fill='x', anchor='w')
+            self.label_durchschnitt_bei_mindestnote.pack(side='top', pady=(5,0), padx=10, fill='x', anchor='w')
 
     def fill_studiendauer(self):
         dashboard_dto = self.dashboard_dto
@@ -190,7 +211,10 @@ class Dashboard(ttk.Frame):
         self.label_studiendauer.config(text=f"Studiendauer: {fortschritt:.2f} %")
         self.label_enddatum.config(text=f"Enddatum: {dashboard_dto.student.zielabschlussdatum.strftime('%d.%m.%Y')}")
         self.label_verbleibende_dauer_value.config(text=f'{verbleibende_dauer.years} Jahr(e), {verbleibende_dauer.months} Monat(e), {verbleibende_dauer.days} Tag(e)')
-        self.label_verfuegbare_dauer_value.config(text=f'{dashboard_dto.verfuegbare_dauer_pro_modul:.2f} Tag(e)')
+        if dashboard_dto.verfuegbare_dauer_pro_modul is not None:
+            self.label_verfuegbare_dauer_value.config(text=f'{dashboard_dto.verfuegbare_dauer_pro_modul:.2f} Tag(e)')
+        else:
+            self.label_verfuegbare_dauer_value.config(text='N/A')
         self.int_var_studiendauerfortschritt.set(fortschritt)
 
     def fill_semester(self):
@@ -245,9 +269,9 @@ class Dashboard(ttk.Frame):
         header.pack(fill="x")
 
         label_header = ttk.Label(header, text=title, font=("Arial", 12))
-        label_header2 = ttk.Label(header, text=f'Ø Note: {note_text}', font=("Arial", 12))
+        label_header2 = ttk.Label(header, text=f'Ø-Note: {note_text}', font=("Arial", 12))
         label_header3 = ttk.Label(header, text=f'Status: {status}', font=("Arial", 12))
-        label_header4 = ttk.Label(header, text="V")
+        label_header4 = ttk.Label(header, text='▼')
 
         header.columnconfigure((0, 1, 2), weight=2, uniform='a')
         header.columnconfigure(3, weight=1, uniform='a')
@@ -306,7 +330,11 @@ class Dashboard(ttk.Frame):
             self._on_frame_configure
         )
         self.canvas.bind("<Configure>", lambda event: self.canvas.itemconfig(self.scrollable_frame_id, width=event.width))
-        self.canvas.bind("<Enter>", lambda event: self.canvas.bind_all("<MouseWheel>", lambda e: self.canvas.yview_scroll(int(-1*(e.delta/120)), 'units')))
+        self.canvas.bind("<Enter>", lambda event: self.canvas.bind_all("<MouseWheel>", self._on_mousewheel))
+
+    def _on_mousewheel(self, event):
+        if self.canvas.winfo_exists():
+            self.canvas.yview_scroll(int(-1 * (event.delta / 120)), 'units')
 
     def _on_frame_configure(self, event=None):
         width = self.canvas.winfo_width()

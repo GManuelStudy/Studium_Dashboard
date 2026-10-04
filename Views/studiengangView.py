@@ -81,7 +81,11 @@ class Studiengang_Verwalten(ttk.Frame):
             return
 
         for item in selection:
-            self.controller.studiengang_controller.del_studiengang(item)
+            studiengang, fehler = self.controller.studiengang_controller.del_studiengang(item)
+
+        if fehler:
+            messagebox.showerror("Fehler", fehler)
+            return
 
         self.fill_treeview()
 
@@ -89,7 +93,10 @@ class Studiengang_Verwalten(ttk.Frame):
     def open_edit(self):
         if not self.treeview_studiengaenge.selection():
             return
-        studiengang = self.controller.studiengang_controller.get_studiengang(self.treeview_studiengaenge.selection()[0])
+        studiengang, fehler = self.controller.studiengang_controller.get_studiengang(self.treeview_studiengaenge.selection()[0])
+        if fehler:
+            messagebox.showerror("Fehler", fehler)
+            return
         self.controller.zeige_seite(StudiengangForm, self.controller, studiengang=studiengang)
 
 class StudiengangForm(ttk.Frame):
@@ -192,7 +199,11 @@ class StudiengangForm(ttk.Frame):
             self.treeview_module.delete(item)
         if not self.studiengang:
             return
-        module = self.controller.studiengang_controller.get_module(self.studiengang)
+        module, fehler = self.controller.studiengang_controller.get_module(self.studiengang)
+        if fehler:
+            messagebox.showerror("Fehler", fehler)
+            self.controller.zeige_seite(Studiengang_Verwalten, self.controller)
+            return
         for nummer, modul in enumerate(module,1):
             self.treeview_module.insert('', 'end', iid=str(modul.modulcode), values=(nummer, modul.modulname, modul.modulcode, modul.ects, modul.semester.semester))
 
@@ -204,7 +215,6 @@ class StudiengangForm(ttk.Frame):
 
     def fill_form(self):
         self.entry_studiengang.insert(0, self.studiengang.studiengang)
-        # TODO fill treeview_module
 
     def del_row(self):
         selection = self.treeview_module.selection()
@@ -230,17 +240,19 @@ class StudiengangForm(ttk.Frame):
     def save(self):
         bezeichnung = self.entry_studiengang.get().strip()
 
+        if bezeichnung == "":
+            messagebox.showerror("Fehler", "Bitte geben Sie einen Studiengang an.")
+            return
+
         if self.edit:
-            self.controller.studiengang_controller.update_studiengang(self.studiengang, bezeichnung)
+            studiengang, fehler = self.controller.studiengang_controller.update_studiengang(self.studiengang, bezeichnung)
         else:
             studiengang, fehler = self.controller.studiengang_controller.add_studiengang(bezeichnung)
-            if fehler:
-                messagebox.showerror("Fehler", fehler)
-                return
             self.studiengang = studiengang
             self.edit = True
+        if fehler:
+            messagebox.showerror("Fehler", fehler)
+            self.controller.zeige_seite(Studiengang_Verwalten, self.controller)
+            return
 
         self.controller.zeige_seite(StudiengangForm, self.controller, studiengang=self.studiengang)
-
-    # TODO <delete> binding
-    # TODO buttons disablen

@@ -25,49 +25,64 @@ class StudentController:
         return student
 
     def add_student(self, vorname: str, nachname: str, matrikelnummer: str, studiengang: Studiengang, notendurchschnitt_ziel: float, beginndatum: datetime, zielabschlussdatum: datetime):
-
-        if zielabschlussdatum <= beginndatum:
-            # ende ist vor dem beginn
-            # TODO: Fehlermeldung anzeigen
-            return
         student = Student(vorname, nachname, matrikelnummer, studiengang, notendurchschnitt_ziel, beginndatum, zielabschlussdatum)
-        self._student_rep.speichern(student)
+        try:
+            self._student_rep.speichern(student)
+        except ValueError:
+            return None, "Der Student existiert bereits."
+        except TypeError:
+            return None, "Studiengang wurde nicht gefunden."
+        except:
+            return None, "Ein unerwarteter Fehler ist aufgetreten."
+
         module = self._modul_rep.lade_module_von_studiengang(student.studiengang)
         for modul in module:
             pruefungsleistung = Pruefungsleistung(student, modul, None, Status.OFFEN)
             self._pruefungsleistung_rep.speichern(pruefungsleistung)
             student.pruefungsleistungen.append(pruefungsleistung)
 
+        return student, None
+
     def update_student(self, student:Student, vorname: str, nachname: str, matrikelnummer: str, studiengang: Studiengang, notendurchschnitt_goal: float, beginndatum: datetime, zielabschlussdatum: datetime):
-        if zielabschlussdatum <= beginndatum:
-            return
         studiengang_check = student.studiengang.studiengang != studiengang.studiengang
 
-        if studiengang_check:
-            self._pruefungsleistung_rep.loesche_pruefungsleistungen_von_student(student)
-            module = self._modul_rep.lade_module_von_studiengang(studiengang)
-            student.pruefungsleistungen.clear()
-            for modul in module:
-                pruefungsleistung = Pruefungsleistung(student, modul, None, Status.OFFEN)
-                self._pruefungsleistung_rep.speichern(pruefungsleistung)
-                student.pruefungsleistungen.append(pruefungsleistung)
+        try:
+            if studiengang_check:
+                self._pruefungsleistung_rep.loesche_pruefungsleistungen_von_student(student)
+                module = self._modul_rep.lade_module_von_studiengang(studiengang)
+                student.pruefungsleistungen.clear()
+                for modul in module:
+                    pruefungsleistung = Pruefungsleistung(student, modul, None, Status.OFFEN)
+                    self._pruefungsleistung_rep.speichern(pruefungsleistung)
+                    student.pruefungsleistungen.append(pruefungsleistung)
 
-        self._student_rep.aktualisieren(student, vorname, nachname, matrikelnummer, studiengang, notendurchschnitt_goal, beginndatum, zielabschlussdatum)
+            self._student_rep.aktualisieren(student, vorname, nachname, matrikelnummer, studiengang, notendurchschnitt_goal, beginndatum, zielabschlussdatum)
+        except ValueError:
+            return None, "Der Student existiert bereits."
+        except TypeError:
+            return None, "Studiengang wurde nicht gefunden."
+        except:
+            return None, "Ein unerwarteter Fehler ist aufgetreten."
+        return student, None
 
     def del_student(self, matrikelnummer: str):
-        self._student_rep.loeschen(matrikelnummer)
+        try:
+            self._student_rep.loeschen(matrikelnummer)
+        except TypeError:
+            return None, "Student existiert nicht."
 
     def update_pruefungsleistungen(self, student, data):
         for pruefungsleistung, row in zip(student.pruefungsleistungen, data):
             if row[4] == '':
                 row[4] = 0
-
-
-            note = float(row[4])
+            try:
+                note = float(row[4])
+            except ValueError:
+                note = 0
 
             pruefungsleistung.note = note
 
-            if note == 5:
+            if note > 4:
                 status = Status.NICHT_BESTANDEN
             elif note == 0:
                 status = Status.OFFEN
@@ -76,4 +91,11 @@ class StudentController:
                 status = Status.ABGESCHLOSSEN
 
             pruefungsleistung.status = status
-            self._pruefungsleistung_rep.aktualisieren(pruefungsleistung)
+            try:
+                pruefungsleistung = self._pruefungsleistung_rep.aktualisieren(pruefungsleistung)
+            except TypeError:
+                return None, "Student existiert nicht."
+            except:
+                return None, "Ein unerwarteter Fehler ist aufgetreten."
+
+        return '', None

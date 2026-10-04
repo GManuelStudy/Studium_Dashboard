@@ -2,7 +2,7 @@ import ttkbootstrap as ttk
 from tkinter import messagebox
 import tkinter as tk
 from tksheet import Sheet
-
+from Views.validierung import (vorname_validieren, nachname_validieren, matrikelnummer_validieren, note_validieren, zielnotendurchschnitt_validieren)
 from Model.student import Student
 from Model.studiengang import Studiengang
 
@@ -41,6 +41,7 @@ class Student_Verwalten(ttk.Frame):
 
         self.treeview_studenten.bind('<Delete>', lambda e: self.del_row())
         self.treeview_studenten.bind('<Double-Button-1>', lambda e: self.open_edit())
+        self.treeview_studenten.bind('<<TreeviewSelect>>', self.treeview_selected)
 
         # self.treeview_studenten.insert('', 0, values=('2',
         #                                                   'Manuel',
@@ -65,8 +66,8 @@ class Student_Verwalten(ttk.Frame):
         self.button_neu = ttk.Button(self, text='+', bootstyle='success', style='success.TButton', command= lambda: self.controller.zeige_seite(StudentenForm, self.controller))
 
         self.frame_buttons = ttk.Frame(self)
-        self.button_bearbeiten = ttk.Button(self.frame_buttons, text="Datensatz bearbeiten", bootstyle='primary', command= self.open_edit)
-        self.button_loeschen = ttk.Button(self.frame_buttons, text="Datensatz löschen", bootstyle='danger', command= self.del_row)
+        self.button_bearbeiten = ttk.Button(self.frame_buttons, text="Datensatz bearbeiten", bootstyle='primary', state='disabled', command= self.open_edit)
+        self.button_loeschen = ttk.Button(self.frame_buttons, text="Datensatz löschen", bootstyle='danger', state='disabled', command= self.del_row)
         self.button_zurueck = ttk.Button(self.frame_buttons, text="Zurück", bootstyle='secondary', command= lambda: self.controller.zeige_startseite())
 
 
@@ -92,6 +93,14 @@ class Student_Verwalten(ttk.Frame):
             ende = student.zielabschlussdatum.strftime("%d.%m.%Y")
             self.treeview_studenten.insert('', 'end', iid=str(student.matrikelnummer), values=(nummer, student.vorname, student.nachname, student.matrikelnummer, student.studiengang.studiengang, student.zielnotendurchschnitt, beginn, ende))
 
+    def treeview_selected(self, event = None):
+        if self.treeview_studenten.selection():
+            self.button_loeschen.config(state='normal')
+            self.button_bearbeiten.config(state='normal')
+        else:
+            self.button_loeschen.config(state='disabled')
+            self.button_bearbeiten.config(state='disabled')
+
     def del_row(self):
         selection = self.treeview_studenten.selection()
         if not selection:
@@ -103,6 +112,8 @@ class Student_Verwalten(ttk.Frame):
         self.fill_treeview()
 
     def open_edit(self):
+        if not self.treeview_studenten.selection():
+            return
         student = self.controller.student_controller.get_student(self.treeview_studenten.selection()[0])
         self.controller.zeige_seite(StudentenForm, self.controller, student=student)
 
@@ -129,29 +140,34 @@ class StudentenForm(ttk.Frame):
 
         self.frame_studenten_form = ttk.Frame(self)
         self.label_vorname = ttk.Label(self.frame_studenten_form, text="Vorname:")
-        self.entry_vorname = ttk.Entry(self.frame_studenten_form)
+        self.entry_vorname = ttk.Entry(self.frame_studenten_form, validate='key', validatecommand=(self.register(vorname_validieren), '%P'))
         self.label_nachname = ttk.Label(self.frame_studenten_form, text="Nachname:")
-        self.entry_nachname = ttk.Entry(self.frame_studenten_form)
+        self.entry_nachname = ttk.Entry(self.frame_studenten_form, validate='key', validatecommand=(self.register(nachname_validieren), '%P'))
         self.label_matrikelnummer = ttk.Label(self.frame_studenten_form, text="Matrikelnummer:")
-        self.entry_matrikelnummer = ttk.Entry(self.frame_studenten_form)
+        self.entry_matrikelnummer = ttk.Entry(self.frame_studenten_form, validate='key', validatecommand=(self.register(matrikelnummer_validieren), '%P'))
         self.label_studiengang = ttk.Label(self.frame_studenten_form, text="Studiengang:")
         self.str_var_studiengang = tk.StringVar()
-        self.combobox_studiengang = ttk.Combobox(self.frame_studenten_form, textvariable=self.str_var_studiengang)
+        self.combobox_studiengang = ttk.Combobox(self.frame_studenten_form, state='readonly', textvariable=self.str_var_studiengang)
         self.label_notendurchschnitt_goal = ttk.Label(self.frame_studenten_form, text="Zielnotendurch-\nschnitt:")
-        self.entry_notendurchschnitt_goal = ttk.Entry(self.frame_studenten_form)
+        self.entry_notendurchschnitt_goal = ttk.Entry(self.frame_studenten_form, validate='key', validatecommand=(self.register(zielnotendurchschnitt_validieren), '%P'))
         self.label_beginn = ttk.Label(self.frame_studenten_form, text="Beginndatum:")
         self.entry_beginn = ttk.DateEntry(self.frame_studenten_form)
         self.label_ende = ttk.Label(self.frame_studenten_form, text='Enddatum:')
         self.entry_ende = ttk.DateEntry(self.frame_studenten_form)
         self.button_save_student = ttk.Button(self.frame_studenten_form, text="Student speichern", bootstyle="primary", command=self.save_student)
 
+        for date_entry in (self.entry_beginn, self.entry_ende):
+            date_entry.entry.bind('<Key>', lambda e: 'break')
+            date_entry.entry.bind('<<Paste>>', lambda e: 'break')
+            date_entry.entry.bind('<Button-2>', lambda e: 'break')
 
         self.frame_module = ttk.Frame(self)
         self.label_modul = ttk.Label(self.frame_module, text="Module:", font=("Arial", 16, "bold"))
         self.treeview_module = Sheet(self.frame_module, headers=['Modulname', 'Modulcode', 'ECTS', 'Semester', 'Erreichte Note'], height=200)
+        self.treeview_module.edit_validation(note_validieren)
         self.treeview_module.enable_bindings('edit_cell', 'single_select')
         self.treeview_module.readonly_columns([0,1,2,3])
-        self.button_modul = ttk.Button(self.frame_module, text="Note Eintragen", bootstyle="primary", command=self.note_eintragen)
+        self.button_modul = ttk.Button(self.frame_module, text="Note Eintragen", state='disabled', bootstyle="primary", command=self.note_eintragen)
 
         self.button_zurueck = ttk.Button(self, text="Zurück", bootstyle='secondary', command= lambda: self.controller.zeige_seite(Student_Verwalten, self.controller))
 
@@ -197,6 +213,7 @@ class StudentenForm(ttk.Frame):
         self.entry_notendurchschnitt_goal.insert(0, self.student.zielnotendurchschnitt)
         self.entry_beginn.set_date(self.student.beginndatum.date())
         self.entry_ende.set_date(self.student.zielabschlussdatum.date())
+        self.button_modul.config(state='normal')
 
     def fill_combobox(self):
         self.studiengaenge = self.controller.studiengang_controller.get_studiengaenge()
@@ -222,19 +239,41 @@ class StudentenForm(ttk.Frame):
     def save_student(self):
         studiengang = self.get_selected_item()
 
+        if self.entry_vorname.get() == "" or self.entry_nachname.get() == "" or self.entry_matrikelnummer.get() == "" or self.entry_beginn is None or self.entry_ende is None or self.entry_notendurchschnitt_goal.get() == "" or studiengang is None:
+            messagebox.showerror("Fehler", "Bitte füllen Sie alle Felder aus.")
+            return
+
+        if self.entry_ende.get_date() <= self.entry_beginn.get_date():
+            messagebox.showerror("Fehler", "Das Enddatum muss größer als das Beginndatum sein.")
+            return
+
+        try:
+            zielnotendurchschnitt = float(self.entry_notendurchschnitt_goal.get().strip().replace(',', '.'))
+        except ValueError:
+            messagebox.showerror("Fehler", "Bitte einen Zielnotendurchschnitt angeben.")
+            return
+
         if self.edit:
             if studiengang.studiengang != self.student.studiengang.studiengang:
                 msgbox = messagebox.askyesno('Studiengang geändert','Wenn der Studiengang geändert wird, werden alle bisherigen Prüfungsleistungen des Studenten gelöscht!\n\nFortfahren?')
                 if not msgbox:
                     return
 
-            self.controller.student_controller.update_student(self.student, self.entry_vorname.get(), self.entry_nachname.get(), self.entry_matrikelnummer.get(), studiengang, self.entry_notendurchschnitt_goal.get(), self.entry_beginn.get_date(), self.entry_ende.get_date())
+            student, fehler = self.controller.student_controller.update_student(self.student, self.entry_vorname.get(), self.entry_nachname.get(), self.entry_matrikelnummer.get(), studiengang, zielnotendurchschnitt, self.entry_beginn.get_date(), self.entry_ende.get_date())
         else:
-            self.controller.student_controller.add_student(self.entry_vorname.get(), self.entry_nachname.get(), self.entry_matrikelnummer.get(), studiengang, self.entry_notendurchschnitt_goal.get(), self.entry_beginn.get_date(), self.entry_ende.get_date())
+            student, fehler = self.controller.student_controller.add_student(self.entry_vorname.get(), self.entry_nachname.get(), self.entry_matrikelnummer.get(), studiengang, zielnotendurchschnitt, self.entry_beginn.get_date(), self.entry_ende.get_date())
+
+        if fehler:
+            messagebox.showerror("Fehler", fehler)
+            self.controller.zeige_seite(Student_Verwalten, self.controller)
+            return
 
         self.controller.zeige_seite(Student_Verwalten, self.controller)
 
     def note_eintragen(self):
         data = self.treeview_module.get_sheet_data()
-        self.controller.student_controller.update_pruefungsleistungen(self.student, data)
+        pruefungsleistung, fehler = self.controller.student_controller.update_pruefungsleistungen(self.student, data)
+        if fehler:
+            messagebox.showerror("Fehler", fehler)
+            return
         self.controller.zeige_seite(StudentenForm, self.controller, student=self.student)
