@@ -10,11 +10,12 @@ from Repository.sqlite_repository.sqlite_studiengang_repository import SQLiteStu
 from Repository.database import Database
 from Service.dashboard_service import DashboardService
 from Views.mainWindow import App
+import tkinter as tk
 
 class DashboardApp:
     def __init__(self) -> None:
         self._db = Database()
-        self._app = App("Studium Dashboard", (1200, 800))
+        self._app = App("Studium Dashboard", (1200, 800), theme='sandstone-light')
 
         self._dashboard_service = DashboardService()
 
@@ -28,7 +29,7 @@ class DashboardApp:
         self._pruefungsleistung_rep.student_repository = self._student_rep
         self._pruefungsleistung_rep.modul_repository = self._modul_rep
 
-        self._studiengang_controller = StudiengangController(self._studiengang_rep, self._modul_rep, self._semester_rep)
+        self._studiengang_controller = StudiengangController(self._studiengang_rep, self._modul_rep, self._semester_rep, self._student_rep, self._pruefungsleistung_rep)
         self._student_controller = StudentController(self._student_rep, self._modul_rep, self._pruefungsleistung_rep)
         self._dashboard_controller = DashboardController(self._student_rep, self._modul_rep, self._pruefungsleistung_rep, self._studiengang_rep, self._semester_rep, self._dashboard_service)
         self._dashboard_controller = HomeController(self._app, self._studiengang_controller, self._student_controller, self._dashboard_controller)
@@ -36,4 +37,12 @@ class DashboardApp:
 
     def start(self) -> None:
         self._db.initialize_database()
-        self._app.mainloop()
+        try:
+            self._app.mainloop()
+        except KeyboardInterrupt:
+            pass
+        finally:
+            try:
+                self._app.destroy()
+            except tk.TclError:
+                pass

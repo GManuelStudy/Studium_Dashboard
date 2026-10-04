@@ -8,11 +8,11 @@ from Views.studiengangView import Studiengang_Verwalten
 from Controller.studiengang_controller import StudiengangController
 from Controller.student_controller import StudentController
 
-class App(tk.Tk):
-    def __init__(self, title:str, size:tuple[int,int]):
-        super().__init__()
-        self.title(title)
+class App(ttk.Window):
+    def __init__(self, title:str, size:tuple[int,int], theme='sandstone-light'):
+        super().__init__(title=title, themename=theme)
         self.geometry(f"{size[0]}x{size[1]}")
+        print(ttk.Style().theme_names())
 
 class MainWindow(ttk.Frame):
     def __init__(self, parent, controller):
