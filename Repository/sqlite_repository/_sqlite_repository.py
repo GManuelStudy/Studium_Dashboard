@@ -13,8 +13,6 @@ class SQLiteRepository:
     def _lade_eine_zeile(self, sql, parameter=()):
         with closing(self.database.get_connection()) as connection:
             row = connection.execute(sql, parameter).fetchone()
-        if row is None:
-            raise ValueError("Der gesuchte Datensatz wurde nicht gefunden.")
         return row
 
     def _lade_zeilen(self, sql, parameter=()):
@@ -27,7 +25,7 @@ class SQLiteRepository:
                 with connection:
                     cursor = connection.execute(sql, parameter)
                     if muss_existieren and cursor.rowcount == 0:
-                        raise ValueError("Der zu ändernde Datensatz wurde nicht gefunden.")
+                        raise TypeError("Der zu ändernde Datensatz wurde nicht gefunden.")
                     return cursor.lastrowid
             except sqlite3.IntegrityError as error:
                 raise ValueError(

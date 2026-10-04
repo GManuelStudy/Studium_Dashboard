@@ -9,7 +9,7 @@ from dateutil.relativedelta import relativedelta
 class DashboardService:
     def berechne_semester_notendurchschnitt(self, semester: Semester, student: Student) -> float:
         noten = [pruefung.note for pruefung in student.pruefungsleistungen
-                 if pruefung.modul.semester == semester and
+                 if pruefung.modul.semester.semester == semester.semester and
                  pruefung.note is not None
         ]
         if len(noten) == 0:
@@ -31,14 +31,15 @@ class DashboardService:
 
         return Status.OFFEN
 
-    def berechne_erforderliche_note(self, student: Student) -> float:
+    def berechne_erforderliche_note(self, student: Student) -> tuple[float, float]:
         anzahl_pruefungen = len([item for item in student.pruefungsleistungen if item.status != Status.OFFEN and item.note is not None])
-        benoetigte_note = student.zielnotendurchschnitt * (anzahl_pruefungen + 1) - student.aktuellerNotendurchschnitt * anzahl_pruefungen
-        if benoetigte_note < 1:
-            return 1
-        return benoetigte_note
+        benoetigte_note = max(student.zielnotendurchschnitt * (anzahl_pruefungen + 1) - student.aktuellerNotendurchschnitt * anzahl_pruefungen, 1.0)
+        durchschnitt_neu = max((student.aktuellerNotendurchschnitt * anzahl_pruefungen + benoetigte_note) / (anzahl_pruefungen + 1),1.0)
+        return benoetigte_note, durchschnitt_neu
 
     def berechne_studienfortschritt(self, student: Student) -> float:
+        if student.studiengang.ectsGesamt == 0:
+            return 0
         return student.aktuelleECTS / student.studiengang.ectsGesamt * 100
 
     def berechne_verbleibende_dauer(self, student: Student) -> relativedelta:

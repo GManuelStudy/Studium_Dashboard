@@ -17,6 +17,10 @@ class StudentRepositoryAbstract(ABC):
         pass
 
     @abstractmethod
+    def lade_alle_von_studiengang(self, studiengang: Studiengang) -> list[Student]:
+        pass
+
+    @abstractmethod
     def aktualisieren(self, student: Student, vorname_neu:str, nachname_neu:str, matrikelnummer_neu:str, studiengang: Studiengang, notendurchschnitt_ziel:float, beginndatum_neu: datetime, zielabschlussdatum_neu: datetime) -> None:
         pass
 

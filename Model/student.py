@@ -22,7 +22,7 @@ class Student:
 
     @property
     def aktuellerNotendurchschnitt(self) -> float:
-        modul_noten = [item.note for item in self.pruefungsleistungen if item.note is not None and item.status == Status.ABGESCHLOSSEN]
+        modul_noten = [item.note for item in self.pruefungsleistungen if item.note is not None and item.status != Status.OFFEN]
         if len(modul_noten) == 0:
             return 0
         return sum(modul_noten) / len(modul_noten)

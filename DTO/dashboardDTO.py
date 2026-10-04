@@ -17,6 +17,7 @@ class DashboardDTO:
     studienfortschritt: float
     aktueller_notendurchschnitt: float
     erforderliche_note: float
+    notendurchschnitt_bei_erfolgreicher_note: float
     studiendauer_fortschritt: float
     verbleibende_dauer: relativedelta
     verfuegbare_dauer_pro_modul: float| None

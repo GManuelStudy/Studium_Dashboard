@@ -41,7 +41,7 @@ class SQLiteStudiengangRepository(SQLiteRepository, StudiengangRepositoryAbstrac
     def aktualisieren(self, studiengang: Studiengang, bezeichnung_neu: str) -> None:
         self._schreiben(
             "UPDATE Studiengang SET bezeichnung = ? WHERE bezeichnung = ?",
-            (bezeichnung_neu, studiengang.studiengang),
+            (bezeichnung_neu, studiengang.studiengang), muss_existieren=True,
         )
         studiengang.studiengang = bezeichnung_neu
 

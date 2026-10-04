@@ -25,46 +25,55 @@ class DashboardController:
     def get_studenten(self) -> list[Student]:
         return self._student_rep.lade_alle()
 
-    def get_student(self, matrikelnummer: str) -> Student:
-        return self._student_rep.lade_student(matrikelnummer)
+    def get_student(self, matrikelnummer: str):
+        try:
+            student = self._student_rep.lade_student(matrikelnummer)
+        except TypeError:
+            return None, "Student wurde nicht gefunden."
+        return student, None
 
-    def lade_dashboard_daten(self, matrikelnummer: str) -> DashboardDTO:
-        student = self._student_rep.lade_student(matrikelnummer)
-        student.studiengang = self._studiengang_rep.lade_studiengang_von_student(student.matrikelnummer)
-        student.pruefungsleistungen = self._pruefungsleistung_rep.lade_pruefungsleistung_von_student(student)
+    def lade_dashboard_daten(self, matrikelnummer: str):
+        try:
+            student = self._student_rep.lade_student(matrikelnummer)
+            student.studiengang = self._studiengang_rep.lade_studiengang_von_student(student.matrikelnummer)
+            student.pruefungsleistungen = self._pruefungsleistung_rep.lade_pruefungsleistung_von_student(student)
 
-        student.studiengang.semester = self._semester_rep.lade_semester_von_studiengang(student.studiengang)
-        for semester in student.studiengang.semester:
-            semester.module = self._modul_rep.lade_module_von_semester(semester)
+            student.studiengang.semester = self._semester_rep.lade_semester_von_studiengang(student.studiengang)
+            for semester in student.studiengang.semester:
+                semester.module = self._modul_rep.lade_module_von_semester(semester)
 
-        studienfortschritt = self._dashboard_service.berechne_studienfortschritt(student)
-        aktueller_notendurchschnitt = student.aktuellerNotendurchschnitt
-        erforderliche_note = self._dashboard_service.berechne_erforderliche_note(student)
+            studienfortschritt = self._dashboard_service.berechne_studienfortschritt(student)
+            aktueller_notendurchschnitt = student.aktuellerNotendurchschnitt
+            erforderliche_note, durchschnitt_neu = self._dashboard_service.berechne_erforderliche_note(student)
 
-        studiendauer_fortschritt = self._dashboard_service.berechne_studiendauer_fortschritt(student)
-        verbleibende_dauer = self._dashboard_service.berechne_verbleibende_dauer(student)
-        verfuegbare_dauer_pro_modul = self._dashboard_service.berechne_verfuegbare_dauer_pro_modul(student)
+            studiendauer_fortschritt = self._dashboard_service.berechne_studiendauer_fortschritt(student)
+            verbleibende_dauer = self._dashboard_service.berechne_verbleibende_dauer(student)
+            verfuegbare_dauer_pro_modul = self._dashboard_service.berechne_verfuegbare_dauer_pro_modul(student)
 
-        semester_dtos = []
-        for semester in student.studiengang.semester:
-            notendurchschnitt = self._dashboard_service.berechne_semester_notendurchschnitt(semester, student)
-            status = self._dashboard_service.berechne_semester_status(semester, student)
+            semester_dtos = []
+            for semester in student.studiengang.semester:
+                notendurchschnitt = self._dashboard_service.berechne_semester_notendurchschnitt(semester, student)
+                status = self._dashboard_service.berechne_semester_status(semester, student)
 
-            modul_dtos = []
-            for modul in semester.module:
-                pruefungsleistung = self._dashboard_service.get_pruefungsleistung(student, modul)
-                note = None
-                modul_status = Status.OFFEN
+                modul_dtos = []
+                for modul in semester.module:
+                    pruefungsleistung = self._dashboard_service.get_pruefungsleistung(student, modul)
+                    note = None
+                    modul_status = Status.OFFEN
 
-                if pruefungsleistung:
-                    note = pruefungsleistung.note
-                    modul_status = pruefungsleistung.status
+                    if pruefungsleistung:
+                        note = pruefungsleistung.note
+                        modul_status = pruefungsleistung.status
 
-                modul_dto = ModulDTO(modul=modul, note=note, status=modul_status)
-                modul_dtos.append(modul_dto)
+                    modul_dto = ModulDTO(modul=modul, note=note, status=modul_status)
+                    modul_dtos.append(modul_dto)
 
-            semester_dto = SemesterDTO(semester=semester, notendurchschnitt=notendurchschnitt, status=status, module=modul_dtos)
-            semester_dtos.append(semester_dto)
+                semester_dto = SemesterDTO(semester=semester, notendurchschnitt=notendurchschnitt, status=status, module=modul_dtos)
+                semester_dtos.append(semester_dto)
+        except TypeError:
+            return None, "Kein Modul gefunden. Bitte überprüfe die Eingaben in Studenten- und Studiengang Verwalten"
+        except Exception as e:
+            return None, f"Ein unerwarteter Fehler ist aufgetreten.\n{e}"
 
         return DashboardDTO(
             student=student,
@@ -72,8 +81,9 @@ class DashboardController:
             studienfortschritt=studienfortschritt,
             aktueller_notendurchschnitt=aktueller_notendurchschnitt,
             erforderliche_note=erforderliche_note,
+            notendurchschnitt_bei_erfolgreicher_note=durchschnitt_neu,
             studiendauer_fortschritt=studiendauer_fortschritt,
             verbleibende_dauer=verbleibende_dauer,
             verfuegbare_dauer_pro_modul=verfuegbare_dauer_pro_modul,
             semester=semester_dtos,
-        )
+        ), None

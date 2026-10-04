@@ -35,8 +35,23 @@ class SQLiteStudentRepository(SQLiteRepository, StudentRepositoryAbstract):
         ))
 
     def lade_alle(self) -> list[Student]:
+        studenten = []
+
+        for row in self._lade_zeilen("SELECT * FROM Student ORDER BY matrikelnummer"):
+            try:
+                student = self.from_database(row)
+                studenten.append(student)
+
+            except TypeError:
+                self.loeschen(row["matrikelnummer"])
+
+        return studenten
+
+    def lade_alle_von_studiengang(self, studiengang: Studiengang) -> list[Student]:
+        studiengang_id = self.studiengang_repository.lade_studiengang_id(studiengang)
         return [self.from_database(row) for row in self._lade_zeilen(
-            "SELECT * FROM Student ORDER BY matrikelnummer"
+            "SELECT * FROM Student WHERE studiengang_id = ? ORDER BY matrikelnummer",
+            (studiengang_id,),
         )]
 
     def aktualisieren(self, student: Student, vorname_neu:str, nachname_neu:str, matrikelnummer_neu:str, studiengang: Studiengang, notendurchschnitt_ziel:float, beginndatum_neu: datetime, zielabschlussdatum_neu: datetime) -> None:
