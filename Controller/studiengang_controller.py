@@ -8,18 +8,26 @@ from Repository.abstract_repository.student_repository_abstract import StudentRe
 from Repository.abstract_repository.studiengang_repository_abstract import StudiengangRepositoryAbstract
 from Repository.abstract_repository.modul_repository_abstract import ModulRepositoryAbstract
 from Repository.abstract_repository.semester_repository_abstract import SemesterRepositoryAbstract
-from Views.studiengangView import Studiengang_Verwalten
-
 
 class StudiengangController:
-    def __init__(self, studiengang_repository: StudiengangRepositoryAbstract, modul_repositoy: ModulRepositoryAbstract, semester_repository: SemesterRepositoryAbstract, student_repository: StudentRepositoryAbstract, pruefungsleistung_repository: PruefungsleistungRepositoryAbstract) -> None:
+    """Übernimmt Aufgaben der Studiengang-Views und koordiniert Speichervorgänge."""
+    def __init__(
+            self,
+            studiengang_repository: StudiengangRepositoryAbstract,
+            modul_repositoy: ModulRepositoryAbstract,
+            semester_repository: SemesterRepositoryAbstract,
+            student_repository: StudentRepositoryAbstract,
+            pruefungsleistung_repository: PruefungsleistungRepositoryAbstract
+    ) -> None:
+        """Initialisiert StudiengangController mit benötigten Abhängigkeiten"""
         self._studiengang_rep = studiengang_repository
         self._modul_rep = modul_repositoy
         self._semester_rep = semester_repository
         self._student_rep = student_repository
         self._pruefungsleistung_rep = pruefungsleistung_repository
 
-    def get_studiengaenge(self) -> list[Studiengang]:
+    def lade_alle_studiengaenge(self) -> list[Studiengang]:
+        """Lade Studiengang inklusive Semester und Module von Repository."""
         studiengaenge_temp = self._studiengang_rep.lade_alle()
         studiengaenge = []
 
@@ -31,7 +39,9 @@ class StudiengangController:
 
         return studiengaenge
 
-    def get_studiengang(self, bezeichnung: str):
+    def lade_studiengang(self, bezeichnung: str) -> tuple[Studiengang | None, str | None]:
+        """Lade Studiengang von Repository.
+        Rückgabe: (Studiengang, None) bei Erfolg; (None, str) als Fehlermeldung"""
         studiengang_temp = Studiengang(studiengang=bezeichnung)
         try:
             studiengang = self._studiengang_rep.lade_studiengang(studiengang_temp)
@@ -39,7 +49,9 @@ class StudiengangController:
             return None, "Studiengang wurde nicht gefunden."
         return studiengang, None
 
-    def add_studiengang(self, bezeichnung: str):
+    def studiengang_hinzufuegen(self, bezeichnung: str) -> tuple[Studiengang | None, str | None]:
+        """Erstellt Studiengang-Objekt und speichert in Datenbank.
+        Rückgabe: (Studiengang, None) bei Erfolg; (None, str) als Fehlermeldung"""
         bezeichnung = bezeichnung.strip()
         studiengang = Studiengang(studiengang=bezeichnung)
 
@@ -52,7 +64,13 @@ class StudiengangController:
 
         return studiengang_neu, None
 
-    def update_studiengang(self, studiengang: Studiengang, bezeichnung_neu: str):
+    def studiengang_aktualisieren(
+            self,
+            studiengang: Studiengang,
+            bezeichnung_neu: str
+    ) -> tuple[Studiengang | None, str | None]:
+        """Aktualisiert Studiengang-Objekt und speichert in Datenbank.
+        Rückgabe: (Studiengang, None) bei Erfolg; (None, str) als Fehlermeldung"""
         try:
             self._studiengang_rep.aktualisieren(studiengang, bezeichnung_neu)
         except ValueError:
@@ -64,7 +82,11 @@ class StudiengangController:
 
         return studiengang, None
 
-    def del_studiengang(self, studiengang_bez: str):
+    def studiengang_loeschen(self, studiengang_bez: str) -> tuple[Studiengang | None, str | None]:
+        """Loesche Studiengang aus Datenbank. Prueft ob Studenten vorhanden sind.
+        Rückgabe: (Student, None) bei Erfolg; (None, str) als Fehlermeldung
+        """
+
         try:
             studiengang = Studiengang(studiengang=studiengang_bez)
             studenten = self._student_rep.lade_alle_von_studiengang(studiengang)
@@ -78,8 +100,13 @@ class StudiengangController:
 
         return studiengang, None
 
-
-    def get_module(self, studiengang: Studiengang):
+    def lade_module_von_studiengang(
+            self,
+            studiengang: Studiengang
+    ) -> tuple[list[Modul] | None, str | None]:
+        """Lade Module eines Studiengangs
+        Rückgabe: (Modul, None) bei Erfolg; (None, str) als Fehlermeldung
+        """
         try:
             module = self._modul_rep.lade_module_von_studiengang(studiengang)
         except TypeError:
@@ -89,25 +116,36 @@ class StudiengangController:
 
         return module, None
 
-    def add_module(self, modulname: str, modulcode: str, ects: int, semester_num: int, studiengang: Studiengang):
+    def modul_hinzufuegen(
+            self,
+            modulname: str,
+            modulcode: str,
+            ects: int,
+            semester_num: int,
+            studiengang: Studiengang
+    ) -> tuple[Modul | None, str | None]:
+        """Erstellt Modul und speichert in Datenbank.
+        Prueft ob Semester existiert. Falls nicht, wird es angelegt.
+        Prueft ob Studenten in dem betroffenen Studiengang vorhanden sind. Wenn ja, werden
+        Pruefungsleistungen angelegt.
+        Rückgabe: (Modul, None) bei Erfolg; (None, str) als Fehlermeldung
+        """
+        # Validierung
         if not studiengang:
             return None, "Studiengang ist nicht vorhanden."
-
         if modulname.strip() == "" or modulcode.strip() == "" or ects == "" or semester_num == "":
             return None, "Alle Modul-Eingabefelder müssen befüllt sein."
         if modulname.strip() == modulcode.strip():
             return None, "Modulname und Modulcode dürfen nicht identisch sein."
         try:
+            # Prueft ob Semester existiert. Falls nicht, wird es angelegt.
             semester_list = self._semester_rep.lade_semester_von_studiengang(studiengang)
             semester = next((item for item in semester_list if item.semester == int(semester_num)), None)
             if semester is None:
                 semester = Semester(semester_num, studiengang)
                 self._semester_rep.speichern(semester)
-                # semester = next(item for item in semester_list if item.semester == semester)
-                # studiengang.semester.append(semester)
 
             modul = Modul(modulcode, modulname, ects, semester)
-
             self._modul_rep.speichern(modul)
         except ValueError:
             return None, f"Ein Modul mit dem Modulcode \"{modulcode}\" existiert bereits."
@@ -115,14 +153,13 @@ class StudiengangController:
             return None, "Studiengang wurde nicht gefunden."
         except:
             return None, "Ein unerwarteter Fehler ist aufgetreten."
-        # semester.module.append(modul)
 
-        # pruefungsleistungen erstellen
+        # Pruefungsleistungen anlegen, falls Studenten vorhanden sind
         try:
             self.student_list = self._student_rep.lade_alle_von_studiengang(studiengang)
             for student in self.student_list:
                 pruefungsleistung = Pruefungsleistung(student, modul, None, Status.OFFEN)
-                self._pruefungsleistung_rep.speichern(pruefungsleistung)
+                self._pruefungsleistung_rep.speichern(pruefungsleistung, studiengang)
         except TypeError:
             return None, "Studiengang wurde nicht gefunden."
         except:
@@ -130,11 +167,14 @@ class StudiengangController:
 
         return modul, None
 
-    def del_modul(self, modulcode: str):
+    def modul_loeschen(self, modulcode: str, studiengang: Studiengang):
+        """Loescht Module aus Datenbank.
+        Prueft ob Semester leer ist. Falls ja, wird es geloescht.
+        """
         try:
-            modul = self._modul_rep.lade_modul(modulcode)
+            modul = self._modul_rep.lade_modul(modulcode, studiengang)
             semester = modul.semester
-            self._modul_rep.loeschen(modulcode)
+            self._modul_rep.loeschen(modulcode, studiengang)
             module = self._modul_rep.lade_module_von_semester(modul.semester)
             if not module:
                 self._semester_rep.loeschen(semester)

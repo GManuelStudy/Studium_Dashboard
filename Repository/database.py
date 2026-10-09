@@ -1,20 +1,25 @@
 import sqlite3
 
 class Database:
+    """Verwaltet SQLite-Verbindungen und gemeinsame Transaktionen"""
     def __init__(self, db_pfad: str = "Repository/studium_dashboard.db") -> None:
+        """Initialisiert Verbindung zur Datenbank über _db_pfad"""
         self._db_pfad = db_pfad
 
     def get_connection(self) -> sqlite3.Connection:
+        """Öffnet SQLite mit Fremdschlüsselprüfung und benannten Zeilen"""
         connection = sqlite3.connect(self._db_pfad)
         connection.execute("PRAGMA foreign_keys = ON")
         connection.row_factory = sqlite3.Row
         return connection
 
     def initialize_database(self) -> None:
+        """Erstellt Tabellen und Indizes"""
         connection = self.get_connection()
 
         cursor = connection.cursor()
-
+        # Semester, Module und Prüfungen werden bei Elternlöschung kaskadierend entfernt.
+        # Der zusammengesetzte Modul-Fremdschlüssel hält Semester und Studiengang konsistent.
         cursor.executescript(f"""
             CREATE TABLE IF NOT EXISTS Studiengang (
                 id              INTEGER PRIMARY KEY AUTOINCREMENT,
