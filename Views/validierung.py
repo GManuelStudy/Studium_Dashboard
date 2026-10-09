@@ -2,7 +2,8 @@ import re
 
 # studiengang_validieren
 def studiengang_validieren(studiengang: str):
-    if len(studiengang) > 30:
+    """Erlaubt bis zu 60 Buchstaben, Umlaute oder Leerzeichen, auch leeren Text."""
+    if len(studiengang) > 60:
         return False
 
     return re.fullmatch(
@@ -11,6 +12,7 @@ def studiengang_validieren(studiengang: str):
     ) is not None
 
 def ects_validieren(ects: str):
+    """Erlaubt bis zu 2 Ziffern, auch leeren Text."""
     if ects == "":
         return True
     if len(ects) > 2:
@@ -18,31 +20,33 @@ def ects_validieren(ects: str):
     return ects.isdigit()
 
 def semester_validieren(semester: str):
+    """Erlaubt eine Ziffer von 1 bis 8, auch leeren Text."""
     if semester == "":
         return True
-    if len(semester) > 1:
-        return False
-    return semester.isdigit() and semester in "12345678"
+    return semester.isdigit() and 1 <= int(semester) <= 12
 
 def modulcode_validieren(modulcode: str):
-    if len(modulcode) > 15:
+    """Erlaubt bis zu 20 Buchstaben, Ziffern oder Umlaute, auch leeren Text."""
+    if len(modulcode) > 20:
         return False
     return re.fullmatch(
-        r"[A-Za-zÄÖÜäöüß0-9]*",
+        r"[A-Za-zÄÖÜäöüß0-9:_/. -]*",
         modulcode
     ) is not None
 
 def modulname_validieren(modulname: str):
-    if len(modulname) > 20:
+    """Erlaubt bis zu 100 Buchstaben, Umlaute oder Leerzeichen, auch leeren Text."""
+    if len(modulname) > 100:
         return False
     return re.fullmatch(
-        r"[A-Za-zÄÖÜäöüß ]*",
+        r"[A-Za-zÄÖÜäöüß:_ -]*",
         modulname
     ) is not None
 
 # student validieren
 def vorname_validieren(vorname: str):
-    if len(vorname) > 15:
+    """Erlaubt bis zu 20 Buchstaben oder Umlaute, auch leeren Text."""
+    if len(vorname) > 20:
         return False
     return re.fullmatch(
         r"[A-Za-zÄÖÜäöüß]*",
@@ -50,7 +54,8 @@ def vorname_validieren(vorname: str):
     ) is not None
 
 def nachname_validieren(nachname: str):
-    if len(nachname) > 15:
+    """Erlaubt bis zu 30 Buchstaben oder Umlaute, auch leeren Text."""
+    if len(nachname) > 30:
         return False
     return re.fullmatch(
         r"[A-Za-zÄÖÜäöüß]*",
@@ -58,6 +63,7 @@ def nachname_validieren(nachname: str):
     ) is not None
 
 def matrikelnummer_validieren(matrikelnummer: str):
+    """Erlaubt bis zu 10 Buchstaben oder Ziffern, auch leeren Text."""
     if len(matrikelnummer) > 10:
         return False
     return re.fullmatch(
@@ -66,6 +72,7 @@ def matrikelnummer_validieren(matrikelnummer: str):
     ) is not None
 
 def beginndatum_validieren(beginndatum: str):
+    """Erlaubt ein Datum im Format dd/mm/yyyy."""
     if len(beginndatum) > 8:
         return False
     return re.fullmatch(
@@ -74,6 +81,7 @@ def beginndatum_validieren(beginndatum: str):
     ) is not None
 
 def zielabschlussdatum_validieren(zielabschlussdatum: str):
+    """Erlaubt ein Datum im Format dd/mm/yyyy."""
     if len(zielabschlussdatum) > 8:
         return False
     return re.fullmatch(
@@ -82,6 +90,7 @@ def zielabschlussdatum_validieren(zielabschlussdatum: str):
     ) is not None
 
 def zielnotendurchschnitt_validieren(zielnotendurchschnitt: str):
+    """Erlaubt leeren Text oder Zielnoten 1 bis 4 mit höchstens einer Dezimalstelle."""
     if zielnotendurchschnitt == "":
         return True
     if not re.fullmatch(r"[1-4]([.,][0-9]?)?", zielnotendurchschnitt):
@@ -89,6 +98,10 @@ def zielnotendurchschnitt_validieren(zielnotendurchschnitt: str):
     return float(zielnotendurchschnitt.replace(',', '.')) <= 4.0
 
 def note_validieren(event):
+    """Validiert event.value bei der Bearbeitung einer tksheet-Notenzelle.
+    Liefert normalisierten Text mit Dezimalpunkt, leeren Text zum Löschen oder
+    None zum Ablehnen. Zulässig sind Noten 1 bis 5 mit einer Dezimalstelle.
+    """
     note_text = str(event.value).strip().replace(',', '.')
     if note_text == "":
         return ""

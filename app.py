@@ -13,12 +13,16 @@ from Views.mainWindow import App
 import tkinter as tk
 
 class DashboardApp:
+    """Verknüpft Datenbank, Repositories, Fachcontroller und GUI."""
     def __init__(self) -> None:
+        """Initialisiert die benötigten Abhängigkeiten"""
         self._db = Database()
         self._app = App("Studium Dashboard", (1200, 800), theme='sandstone-light')
 
+        # services
         self._dashboard_service = DashboardService()
 
+        # repositories
         self._studiengang_rep = SQLiteStudiengangRepository(self._db)
         self._semester_rep = SQLiteSemesterRepository(self._db, self._studiengang_rep)
         self._modul_rep = SQLiteModulRepository(self._db, self._studiengang_rep)
@@ -26,16 +30,40 @@ class DashboardApp:
         self._modul_rep.semester_repository = self._semester_rep
         self._student_rep = SQLiteStudentRepository(self._db, self._studiengang_rep)
         self._pruefungsleistung_rep = SQLitePruefungsleistungRepository(self._db)
-        self._pruefungsleistung_rep.student_repository = self._student_rep
-        self._pruefungsleistung_rep.modul_repository = self._modul_rep
+        self._pruefungsleistung_rep._student_repository = self._student_rep
+        self._pruefungsleistung_rep._modul_repository = self._modul_rep
+        self._pruefungsleistung_rep._studiengang_repository = self._studiengang_rep
 
-        self._studiengang_controller = StudiengangController(self._studiengang_rep, self._modul_rep, self._semester_rep, self._student_rep, self._pruefungsleistung_rep)
-        self._student_controller = StudentController(self._student_rep, self._modul_rep, self._pruefungsleistung_rep)
-        self._dashboard_controller = DashboardController(self._student_rep, self._modul_rep, self._pruefungsleistung_rep, self._studiengang_rep, self._semester_rep, self._dashboard_service)
-        self._dashboard_controller = HomeController(self._app, self._studiengang_controller, self._student_controller, self._dashboard_controller)
-
+        # controllers
+        self._studiengang_controller = StudiengangController(
+            self._studiengang_rep,
+            self._modul_rep,
+            self._semester_rep,
+            self._student_rep,
+            self._pruefungsleistung_rep
+        )
+        self._student_controller = StudentController(
+            self._student_rep,
+            self._modul_rep,
+            self._pruefungsleistung_rep
+        )
+        self._dashboard_controller = DashboardController(
+            self._student_rep,
+            self._modul_rep,
+            self._pruefungsleistung_rep,
+            self._studiengang_rep,
+            self._semester_rep,
+            self._dashboard_service
+        )
+        self._dashboard_controller = HomeController(
+            self._app,
+            self._studiengang_controller,
+            self._student_controller,
+            self._dashboard_controller
+        )
 
     def start(self) -> None:
+        """Startet das Programm und räumt das Fenster beim Ende auf."""
         self._db.initialize_database()
         try:
             self._app.mainloop()
