@@ -31,15 +31,6 @@ class ModulRepositoryAbstract(ABC):
         pass
 
     @abstractmethod
-    def aktualisieren(
-        self, modul: Modul, modulname_neu: str | None = None,
-        modulcode_neu: str | None = None, ects_neu: int | None = None,
-        semester_neu: Semester | int | None = None,
-    ) -> None:
-        """Aktualisiert Module; None behält den jeweiligen bisherigen Wert bei."""
-        pass
-
-    @abstractmethod
     def loeschen(self, modulcode: str, studiengang: Studiengang | None = None) -> None:
         """Löscht ein Modul.
         Bei mehrfach verwendetem Code ist der Studiengang erforderlich.

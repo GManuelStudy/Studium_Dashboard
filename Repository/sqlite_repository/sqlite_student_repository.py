@@ -20,7 +20,7 @@ class SQLiteStudentRepository(SQLiteRepository, StudentRepositoryAbstract):
                zielnotendurchschnitt, beginndatum, zielabschlussdatum)
                VALUES (:vorname, :nachname, :matrikelnummer, :studiengang_id,
                :zielnotendurchschnitt, :beginndatum, :zielabschlussdatum)""",
-            self.to_database(student),
+            self._to_database(student),
         )
 
     def lade_student_id(self, matrikelnummer: str) -> int:
@@ -35,7 +35,7 @@ class SQLiteStudentRepository(SQLiteRepository, StudentRepositoryAbstract):
 
     def lade_von_id(self, id: int) -> Student:
         """Lade Student aus Datenbank nach technischer Datenbank-ID"""
-        return self.from_database(self._lade_eine_zeile(
+        return self._from_database(self._lade_eine_zeile(
             "SELECT * FROM Student WHERE id = ?", (id,),
         ))
 
@@ -45,7 +45,7 @@ class SQLiteStudentRepository(SQLiteRepository, StudentRepositoryAbstract):
 
         for row in self._lade_zeilen("SELECT * FROM Student ORDER BY matrikelnummer"):
             try:
-                student = self.from_database(row)
+                student = self._from_database(row)
                 studenten.append(student)
 
             except TypeError:
@@ -56,7 +56,7 @@ class SQLiteStudentRepository(SQLiteRepository, StudentRepositoryAbstract):
     def lade_alle_von_studiengang(self, studiengang: Studiengang) -> list[Student]:
         """Lade alle Studenten eines Studiengangs sortiert nach Matrikelnummer"""
         studiengang_id = self.studiengang_repository.lade_studiengang_id(studiengang)
-        return [self.from_database(row) for row in self._lade_zeilen(
+        return [self._from_database(row) for row in self._lade_zeilen(
             "SELECT * FROM Student WHERE studiengang_id = ? ORDER BY matrikelnummer",
             (studiengang_id,),
         )]
@@ -98,7 +98,7 @@ class SQLiteStudentRepository(SQLiteRepository, StudentRepositoryAbstract):
             (matrikelnummer,),
         )
 
-    def from_database(self, row) -> Student:
+    def _from_database(self, row) -> Student:
         """Erzeugt ein Modell aus einer zur Repository-Abfrage"""
         return Student(
             vorname=row["vorname"], nachname=row["nachname"], matrikelnummer=row["matrikelnummer"],
@@ -108,7 +108,7 @@ class SQLiteStudentRepository(SQLiteRepository, StudentRepositoryAbstract):
             zielabschlussdatum=datetime.fromisoformat(row["zielabschlussdatum"]),
         )
 
-    def to_database(self, student: Student) -> dict:
+    def _to_database(self, student: Student) -> dict:
         """Bildet das Modell auf SQL-Parameter ab und löst erforderliche Referenzen auf."""
         return {
             "vorname": student.vorname, "nachname": student.nachname,

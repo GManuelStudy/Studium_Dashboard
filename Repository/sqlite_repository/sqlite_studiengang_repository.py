@@ -13,7 +13,7 @@ class SQLiteStudiengangRepository(SQLiteRepository, StudiengangRepositoryAbstrac
         """Speichert ein Studiengang in der Datenbank"""
         row_id = self._schreiben(
             "INSERT INTO Studiengang (bezeichnung) VALUES (:bezeichnung)",
-            self.to_database(studiengang),
+            self._to_database(studiengang),
         )
         studiengang = self.lade_von_id(row_id)
         return studiengang
@@ -38,13 +38,13 @@ class SQLiteStudiengangRepository(SQLiteRepository, StudiengangRepositoryAbstrac
 
     def lade_von_id(self, id: int) -> Studiengang:
         """Lade Studiengang aus Datenbank nach technischer Datenbank-ID"""
-        return self.from_database(self._lade_eine_zeile(
+        return self._from_database(self._lade_eine_zeile(
             "SELECT * FROM Studiengang WHERE id = ?", (id,),
         ))
 
     def lade_alle(self) -> list[Studiengang]:
         """Lade alle Studiengänge sortiert nach Bezeichnung"""
-        return [self.from_database(row) for row in self._lade_zeilen(
+        return [self._from_database(row) for row in self._lade_zeilen(
             "SELECT * FROM Studiengang ORDER BY bezeichnung"
         )]
 
@@ -63,10 +63,10 @@ class SQLiteStudiengangRepository(SQLiteRepository, StudiengangRepositoryAbstrac
             (studiengang.studiengang,),
         )
 
-    def from_database(self, row) -> Studiengang:
+    def _from_database(self, row) -> Studiengang:
         """Erzeugt ein Modell aus einer zur Repository-Abfrage"""
         return Studiengang(studiengang=row["bezeichnung"])
 
-    def to_database(self, studiengang: Studiengang) -> dict:
+    def _to_database(self, studiengang: Studiengang) -> dict:
         """Bildet das Modell auf SQL-Parameter ab und löst erforderliche Referenzen auf."""
         return {"bezeichnung": studiengang.studiengang}

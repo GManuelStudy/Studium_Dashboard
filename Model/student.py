@@ -22,7 +22,7 @@ class Student:
     pruefungsleistungen: list[Pruefungsleistung] = field(default_factory=list)
 
     @property
-    def aktuellerNotendurchschnitt(self) -> float:
+    def aktueller_notendurchschnitt(self) -> float:
         """Berechnet aktuellen Notendurchschnitt aus Prüfungsleistungen und gibt das Ergebnis zurück.
         Prüfungsleistungen mit Status.OFFEN werden nicht berücksichtigt.
         Gibt 0 zurück wenn keine Noten in Prüfungsleistungen vorhanden sind.
@@ -36,7 +36,7 @@ class Student:
         return sum(modul_noten) / len(modul_noten)
 
     @property
-    def aktuelleECTS(self) -> int:
+    def aktuelle_ects(self) -> int:
         """Summiert ECTS abgeschlossener Prüfungsleistungen."""
         modul_ects = [
             item.modul.ects for item in self.pruefungsleistungen
@@ -45,7 +45,7 @@ class Student:
         return sum(modul_ects)
 
     @property
-    def abgeschlosseneModule(self) -> int:
+    def abgeschlossene_module(self) -> int:
         """Zählt Prüfungsleistungen mit Status.ABGESCHLOSSEN und gibt das Ergebnis zurück."""
         return len([
             item for item in self.pruefungsleistungen
@@ -53,7 +53,7 @@ class Student:
         ])
 
     @property
-    def abgeschlosseneSemester(self) -> int:
+    def abgeschlossene_semester(self) -> int:
         """Zählt Semester mit allen abgeschlossenen Modulen und gibt das Ergebnis zurück."""
         abgeschlossene_semester = 0
         for semester in self.studiengang.semester:

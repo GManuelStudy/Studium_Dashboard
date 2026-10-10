@@ -13,16 +13,16 @@ class Studiengang:
     semester : list[Semester] = field(default_factory=list)
 
     @property
-    def ectsGesamt(self) -> float:
+    def ects_gesamt(self) -> float:
         """Summiert die ECTS aller Module der Semester."""
         return sum(item.ects for semester in self.semester for item in semester.module)
 
     @property
-    def anzahlSemester(self) -> int:
+    def anzahl_semester(self) -> int:
         """Gibt die Anzahl der aktuell geladenen Semester zurück."""
         return len(self.semester)
 
     @property
-    def anzahlModule(self) -> int:
+    def anzahl_module(self) -> int:
         """Zählt die Module aller aktuell geladenen Semester."""
         return sum(len(semester.module) for semester in self.semester)

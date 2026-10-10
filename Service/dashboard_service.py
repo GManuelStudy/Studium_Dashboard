@@ -53,10 +53,10 @@ class DashboardService:
         # Somit wird benoetigte_note auf 1 gesetzt.
         benoetigte_note = max(
             student.zielnotendurchschnitt * (anzahl_pruefungen + 1) -
-            student.aktuellerNotendurchschnitt * anzahl_pruefungen, 1.0
+            student.aktueller_notendurchschnitt * anzahl_pruefungen, 1.0
         )
         durchschnitt_neu = max(
-            (student.aktuellerNotendurchschnitt * anzahl_pruefungen + benoetigte_note) /
+            (student.aktueller_notendurchschnitt * anzahl_pruefungen + benoetigte_note) /
             (anzahl_pruefungen + 1), 1.0
         )
         return benoetigte_note, durchschnitt_neu
@@ -65,9 +65,9 @@ class DashboardService:
         """Berechnet Studienfortschritt anhand aktueller ECTS und GesamtECTS.
         Gibt den studienfortschritt als float zurück.
         """
-        if student.studiengang.ectsGesamt == 0:
+        if student.studiengang.ects_gesamt == 0:
             return 0
-        return student.aktuelleECTS / student.studiengang.ectsGesamt * 100
+        return student.aktuelle_ects / student.studiengang.ects_gesamt * 100
 
     def berechne_verbleibende_dauer(self, student: Student) -> relativedelta:
         """Berechnet Verbleibende Studiendauer anhand des Zielabschlussdatums.

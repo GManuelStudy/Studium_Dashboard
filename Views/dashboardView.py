@@ -4,6 +4,7 @@ import tkinter as tk
 from DTO.pruefungsleistungDTO import PruefungsleistungDTO
 from DTO.semesterDTO import SemesterDTO
 from Model.status import Status
+from Model.student import Student
 
 
 class Dashboard(ttk.Frame):
@@ -180,7 +181,7 @@ class Dashboard(ttk.Frame):
         self.label_verfuegbare_dauer.pack(side='top', padx=10, fill='x', anchor='w')
         self.label_verfuegbare_dauer_value.pack(side='top', pady=(0, 5), padx=10, fill='x', anchor='w')
 
-    def _lade_ausgewaehlten_student(self):
+    def _lade_ausgewaehlten_student(self) -> Student | None:
         """Lade den ausgewählten Studenten aus der Combobox."""
         index = self.combobox_studenten.current()
         if index == -1:
@@ -250,15 +251,15 @@ class Dashboard(ttk.Frame):
         self.label_studienfortschritt.config(text=f"Studienfortschritt: {studienfortschritt:.2f}%")
         self.card_ects = self._studienfortschritt_card_erstellen(
             'ECTS:',
-            f'{dashboard_dto.student.aktuelleECTS} / {dashboard_dto.studiengang.ectsGesamt}'
+            f'{dashboard_dto.student.aktuelle_ects} / {dashboard_dto.studiengang.ects_gesamt}'
         )
         self.card_semester = self._studienfortschritt_card_erstellen(
             'Semester:',
-            f'{dashboard_dto.student.abgeschlosseneSemester} / {dashboard_dto.studiengang.anzahlSemester}'
+            f'{dashboard_dto.student.abgeschlossene_semester} / {dashboard_dto.studiengang.anzahl_semester}'
         )
         self.card_module = self._studienfortschritt_card_erstellen(
             'Module:',
-            f'{dashboard_dto.student.abgeschlosseneModule} / {dashboard_dto.studiengang.anzahlModule}'
+            f'{dashboard_dto.student.abgeschlossene_module} / {dashboard_dto.studiengang.anzahl_module}'
         )
 
     def _durchschnittsnote_befuellen(self):
@@ -334,10 +335,10 @@ class Dashboard(ttk.Frame):
         for semester in self.dashboard_dto.semester:
             self._accordion_erstellen(semester)
 
-    def _module_befuellen(self, parent, modul_dto: PruefungsleistungDTO):
+    def _module_befuellen(self, parent, pruefungsleistung_dto: PruefungsleistungDTO):
         """Erzeugt eine Modulzeile für Semesteranzeige aus ModulDTO."""
-        modul = modul_dto.modul
-        note = modul_dto.note
+        modul = pruefungsleistung_dto.modul
+        note = pruefungsleistung_dto.note
 
         if note is None or note == 0:
             note_text = '-'
@@ -361,7 +362,7 @@ class Dashboard(ttk.Frame):
         status_frame = ttk.Frame(content_row)
         status_frame.grid(column=3, row=0, padx=20)
         ttk.Label(status_frame, text='Status:', font=("Arial", 10)).pack(side='left')
-        (self._status_label_erstellen(status_frame, modul_dto.status, font=("Arial", 10))
+        (self._status_label_erstellen(status_frame, pruefungsleistung_dto.status, font=("Arial", 10))
          .pack(side='left'))
         content_row.pack(fill="x", padx=20, pady=2)
 

@@ -16,7 +16,8 @@ class DashboardController:
             student_repository: StudentRepositoryAbstract,
             modul_repository: ModulRepositoryAbstract,
             pruefungsleistung_repository: PruefungsleistungRepositoryAbstract,
-            studiengang_repository: StudiengangRepositoryAbstract, semester_repository: SemesterRepositoryAbstract,
+            studiengang_repository: StudiengangRepositoryAbstract,
+            semester_repository: SemesterRepositoryAbstract,
             dashboardService: DashboardService
     ) -> None:
         """Initalisiert DashboardController mit benötigten Abhängikeiten"""
@@ -82,7 +83,7 @@ class DashboardController:
 
             # Berechnet benötigte Dashboard-Daten
             studienfortschritt = self._dashboard_service.berechne_studienfortschritt(student)
-            aktueller_notendurchschnitt = student.aktuellerNotendurchschnitt
+            aktueller_notendurchschnitt = student.aktueller_notendurchschnitt
             erforderliche_note, durchschnitt_neu = self._dashboard_service.berechne_erforderliche_note(student)
             studiendauer_fortschritt = self._dashboard_service.berechne_studiendauer_fortschritt(student)
             verbleibende_dauer = self._dashboard_service.berechne_verbleibende_dauer(student)

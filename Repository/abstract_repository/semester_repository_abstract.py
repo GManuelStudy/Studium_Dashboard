@@ -25,11 +25,6 @@ class SemesterRepositoryAbstract(ABC):
         pass
 
     @abstractmethod
-    def aktualisieren(self, semester: Semester, semester_neu: int | None = None) -> None:
-        """Aktualisiert ein Semester"""
-        pass
-
-    @abstractmethod
     def loeschen(self, semester: Semester) -> None:
         """Löscht ein Semester"""
         pass

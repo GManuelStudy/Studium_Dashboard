@@ -39,7 +39,7 @@ class SQLitePruefungsleistungRepository(SQLiteRepository, PruefungsleistungRepos
 
     def lade_pruefungsleistung(self, pruefungsleistung: Pruefungsleistung) -> Pruefungsleistung:
         """Lade Prüfungsleistung aus Datenbank"""
-        return self.from_database(self._lade_eine_zeile(
+        return self._from_database(self._lade_eine_zeile(
             """SELECT * FROM Pruefungsleistung
                WHERE student_id = :student_id AND modul_id = :modul_id""",
             self._schluessel(pruefungsleistung),
@@ -47,20 +47,20 @@ class SQLitePruefungsleistungRepository(SQLiteRepository, PruefungsleistungRepos
 
     def lade_von_id(self, id: int) -> Pruefungsleistung:
         """Lade Objekt nach technischer Datenbank-ID"""
-        return self.from_database(self._lade_eine_zeile(
+        return self._from_database(self._lade_eine_zeile(
             "SELECT * FROM Pruefungsleistung WHERE id = ?", (id,),
         ))
 
     def lade_alle(self) -> list[Pruefungsleistung]:
         """Lade alle Prüfungsleistungen sortiert nach Student und Modul"""
-        return [self.from_database(row) for row in self._lade_zeilen(
+        return [self._from_database(row) for row in self._lade_zeilen(
             "SELECT * FROM Pruefungsleistung ORDER BY student_id, modul_id"
         )]
 
     def lade_pruefungsleistung_von_student(self, student: Student) -> list[Pruefungsleistung]:
         """Lade Prüfungsleistungen eines Studenten"""
         student_id = self._student_repository.lade_student_id(student.matrikelnummer)
-        return [self.from_database(row) for row in self._lade_zeilen(
+        return [self._from_database(row) for row in self._lade_zeilen(
             "SELECT * FROM Pruefungsleistung WHERE student_id = ?", (student_id,),
         )]
 
@@ -69,7 +69,7 @@ class SQLitePruefungsleistungRepository(SQLiteRepository, PruefungsleistungRepos
         self._schreiben(
             """UPDATE Pruefungsleistung SET note = :note, status = :status
                WHERE student_id = :student_id AND modul_id = :modul_id""",
-            self.to_database(pruefungsleistung),
+            self._to_database(pruefungsleistung),
         )
 
     def loeschen(self, pruefungsleistung: Pruefungsleistung) -> None:
@@ -89,7 +89,7 @@ class SQLitePruefungsleistungRepository(SQLiteRepository, PruefungsleistungRepos
             (student_id,)
         )
 
-    def from_database(self, row) -> Pruefungsleistung:
+    def _from_database(self, row) -> Pruefungsleistung:
         """Erzeugt ein Modell aus einer zur Repository-Abfrage"""
         return Pruefungsleistung(
             student=self._student_repository.lade_von_id(row["student_id"]),
@@ -97,7 +97,7 @@ class SQLitePruefungsleistungRepository(SQLiteRepository, PruefungsleistungRepos
             note=row["note"], status=Status(row["status"]),
         )
 
-    def to_database(self, pruefungsleistung: Pruefungsleistung) -> dict:
+    def _to_database(self, pruefungsleistung: Pruefungsleistung) -> dict:
         """Bildet das Modell auf SQL-Parameter ab und löst erforderliche Referenzen auf."""
         return {
             **self._schluessel(pruefungsleistung),

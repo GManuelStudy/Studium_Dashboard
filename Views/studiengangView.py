@@ -108,8 +108,8 @@ class Studiengang_Verwalten(ttk.Frame):
                 'end',
                 iid=str(studiengang.studiengang),
                 values=(
-                    nummer, studiengang.studiengang, studiengang.ectsGesamt,
-                    studiengang.anzahlSemester, studiengang.anzahlModule
+                    nummer, studiengang.studiengang, studiengang.ects_gesamt,
+                    studiengang.anzahl_semester, studiengang.anzahl_module
                 )
             )
 
@@ -201,7 +201,7 @@ class StudiengangForm(ttk.Frame):
             self.frame_studiengang_form,
             text="Studiengang speichern",
             bootstyle="primary",
-            command=lambda: self.save()
+            command=lambda: self.studiengang_speichern()
         )
         self.label_modul = ttk.Label(self, text="Module:", font=("Arial", 16, "bold"))
         self.treeview_module = ttk.Treeview(
@@ -355,7 +355,7 @@ class StudiengangForm(ttk.Frame):
             return
         self._treeview_befuellen()
 
-    def save(self):
+    def studiengang_speichern(self):
         """Speichert die Studiengangbezeichnung und öffnet das Formular mit dem Ergebnis."""
         bezeichnung = self.entry_studiengang.get().strip()
         if bezeichnung == "":
